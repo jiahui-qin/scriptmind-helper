@@ -1,0 +1,1 @@
+"""ScriptMind AI Backend Application"""
