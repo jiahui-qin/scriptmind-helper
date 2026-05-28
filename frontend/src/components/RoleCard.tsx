@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card, CardContent, Typography, IconButton, Collapse, Chip, Box,
   Select, MenuItem, FormControl, InputLabel, TextField, Stack,
-  SelectChangeEvent,
+  SelectChangeEvent, CircularProgress,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -10,20 +10,7 @@ import MaleIcon from '@mui/icons-material/Male';
 import FemaleIcon from '@mui/icons-material/Female';
 import PersonIcon from '@mui/icons-material/Person';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
-import { type Role } from '../services/api';
-
-/** 可用的音色列表（与 MiMo TTS 对应） */
-const VOICE_OPTIONS: { id: string; name: string; gender: string }[] = [
-  { id: 'default', name: '默认音色', gender: 'any' },
-  { id: 'zh-CN-XiaoxiaoNeural', name: '晓晓（女声·温柔）', gender: 'female' },
-  { id: 'zh-CN-YunxiNeural', name: '云希（男声·叙事）', gender: 'male' },
-  { id: 'zh-CN-YunyangNeural', name: '云扬（男声·新闻）', gender: 'male' },
-  { id: 'zh-CN-XiaohanNeural', name: '晓涵（女声·活泼）', gender: 'female' },
-  { id: 'zh-CN-XiaomoNeural', name: '晓墨（女声·沉稳）', gender: 'female' },
-  { id: 'zh-CN-XiaoxuanNeural', name: '晓萱（女声·自信）', gender: 'female' },
-  { id: 'zh-CN-XiaoruiNeural', name: '晓睿（女声·成熟）', gender: 'female' },
-  { id: 'zh-CN-YunjianNeural', name: '云健（男声·运动）', gender: 'male' },
-];
+import { type Role, getVoices, updateRole } from '../services/api';
 
 interface RoleCardProps {
   role: Role;
@@ -64,8 +51,37 @@ export default function RoleCard({
   const [editName, setEditName] = useState(role.name);
   const [editPersonality, setEditPersonality] = useState(role.personality || '');
 
-  const handleVoiceChange = (e: SelectChangeEvent<string>) => {
-    onVoiceChange(role.id, e.target.value);
+  // Voice state
+  const [voiceOptions, setVoiceOptions] = useState<string[]>([]);
+  const [voiceLoading, setVoiceLoading] = useState(false);
+  const [voiceSaving, setVoiceSaving] = useState(false);
+  const [voiceError, setVoiceError] = useState('');
+
+  // Load available voices on mount
+  useEffect(() => {
+    try {
+      const voices = getVoices();
+      setVoiceOptions(voices);
+    } catch {
+      // getVoices is synchronous (returns static array), won't throw
+    }
+  }, []);
+
+  /** Handle voice selection change — save to backend automatically */
+  const handleVoiceChange = async (e: SelectChangeEvent<string>) => {
+    const newVoice = e.target.value;
+    setVoiceSaving(true);
+    setVoiceError('');
+
+    try {
+      await updateRole(role.id, { voice_type: newVoice });
+      onVoiceChange(role.id, newVoice);
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || err?.message || '保存音色失败';
+      setVoiceError(msg);
+    } finally {
+      setVoiceSaving(false);
+    }
   };
 
   const startEditing = () => {
@@ -214,29 +230,37 @@ export default function RoleCard({
         </Stack>
 
         {/* ── 音色选择 ──────────────────────────── */}
-        <FormControl fullWidth size="small">
+        <FormControl fullWidth size="small" error={!!voiceError}>
           <InputLabel>音色选择</InputLabel>
           <Select
-            value={voiceType || 'default'}
+            value={voiceType || ''}
             label="音色选择"
             onChange={handleVoiceChange}
+            disabled={voiceSaving}
             sx={{ borderRadius: 2 }}
+            endAdornment={
+              voiceSaving ? (
+                <CircularProgress size={20} sx={{ mr: 3 }} />
+              ) : null
+            }
           >
-            {VOICE_OPTIONS.map((v) => (
-              <MenuItem key={v.id} value={v.id}>
+            <MenuItem value="">
+              <Typography variant="body2" color="text.secondary">默认音色</Typography>
+            </MenuItem>
+            {voiceOptions.map((v) => (
+              <MenuItem key={v} value={v}>
                 <Stack direction="row" spacing={1} alignItems="center">
-                  {v.gender === 'male' ? (
-                    <MaleIcon fontSize="small" sx={{ color: '#3b82f6' }} />
-                  ) : v.gender === 'female' ? (
-                    <FemaleIcon fontSize="small" sx={{ color: '#ec4899' }} />
-                  ) : (
-                    <PersonIcon fontSize="small" sx={{ color: '#94a3b8' }} />
-                  )}
-                  <Typography variant="body2">{v.name}</Typography>
+                  <PersonIcon fontSize="small" sx={{ color: '#94a3b8' }} />
+                  <Typography variant="body2">{v}</Typography>
                 </Stack>
               </MenuItem>
             ))}
           </Select>
+          {voiceError && (
+            <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+              {voiceError}
+            </Typography>
+          )}
         </FormControl>
 
         {/* ── 展开详细描述 ──────────────────────── */}

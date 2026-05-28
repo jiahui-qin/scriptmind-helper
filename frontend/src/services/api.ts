@@ -12,6 +12,7 @@ export interface ScriptUploadResponse {
   id: number;
   filename: string;
   file_size: number;
+  status: string;
   created_at: string;
 }
 
@@ -102,14 +103,12 @@ export const triggerAnalysis = (scriptId: number) =>
 export const getAnalysisResult = (scriptId: number) =>
   api.get<AnalysisResponse>(`/analysis/${scriptId}`);
 
-export const updateRole = (roleId: number, data: Partial<Role>) =>
-  api.patch<Role>(`/analysis/roles/${roleId}`, data);
-
 // ── TTS ────────────────────────────────────────────────────────
 
-export const triggerTTS = (scriptId: number) =>
+export const triggerTTS = (scriptId: number, roleVoiceMap?: Record<number, string>) =>
   api.post<{ script_id: number; task_id: string; status: string; message: string }>(
-    `/tts/${scriptId}/synthesize`
+    `/tts/${scriptId}/synthesize`,
+    roleVoiceMap ? { role_voice_map: roleVoiceMap } : {}
   );
 
 export const getTTSResult = (taskId: string) =>
@@ -130,6 +129,9 @@ export const updateConfig = (data: { mimo_api_key: string }) =>
   api.post('/config/', data);
 
 export default api;
+
+export const deleteScript = (scriptId: number) =>
+  api.delete(`/upload/script/${scriptId}`);
 
 // --- Roles ---
 export const updateRole = (roleId: number, data: Record<string, any>) =>
