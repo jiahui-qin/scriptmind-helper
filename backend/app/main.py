@@ -1,7 +1,7 @@
 """FastAPI application entry point."""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.endpoints import upload, analysis, tts, config
+from app.api.endpoints import upload, analysis, tts, config, roles
 from app.database import create_tables
 
 # Create FastAPI application instance
@@ -28,6 +28,7 @@ app.include_router(upload.router, prefix="/api/v1/upload", tags=["upload"])
 app.include_router(analysis.router, prefix="/api/v1/analysis", tags=["analysis"])
 app.include_router(tts.router, prefix="/api/v1/tts", tags=["tts"])
 app.include_router(config.router, prefix="/api/v1/config", tags=["config"])
+app.include_router(roles.router, prefix="/api/v1/roles", tags=["roles"])
 
 
 @app.on_event("startup")

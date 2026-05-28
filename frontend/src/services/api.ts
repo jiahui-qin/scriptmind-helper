@@ -130,3 +130,11 @@ export const updateConfig = (data: { mimo_api_key: string }) =>
   api.post('/config/', data);
 
 export default api;
+
+// --- Roles ---
+export const updateRole = (roleId: number, data: Record<string, any>) =>
+  api.put(`/roles/${roleId}`, data)
+
+export const getVoices = () => [
+  "Chloe", "James", "Emma", "William", "Ava", "Michael", "Sophia", "Daniel", "Mia",
+]
