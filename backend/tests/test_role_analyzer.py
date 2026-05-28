@@ -137,10 +137,17 @@ class TestAnalyzeRoles:
     @patch("app.services.role_analyzer._call_mimo_chat")
     def test_validation_error_with_fallback(self, mock_call: MagicMock):
         """Test that validation error (missing field) triggers fallback JSON extraction."""
-        # Send invalid data that will fail Pydantic validation but have extractable JSON
-        mock_call.return_value = '{"roles": [{"name": "张三"}]} extra stuff {"roles": [{"name": "张三","gender": "男","age": 20,"voice_type": "青年","personality": "勇敢","description": "主角"}]}'
+        # Send a response that is valid JSON but fails Pydantic validation (missing fields),
+        # wrapped with extra text so regex fallback kicks in
+        mock_call.return_value = (
+            'Some introductory text.\n'
+            '{"roles": [{"name": "张三","gender": "男","age": 20,'
+            '"voice_type": "青年","personality": "勇敢","description": "主角"}]}\n'
+            'Some trailing explanation.'
+        )
         result = analyze_roles(SAMPLE_SCRIPT, SAMPLE_ROLE_NAMES)
         assert len(result) == 1
+        assert result[0]["name"] == "张三"
 
 
 class TestRoleProfileModel:

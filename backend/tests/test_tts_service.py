@@ -7,6 +7,33 @@ import json
 import tempfile
 import pytest
 from unittest.mock import patch, MagicMock, mock_open
+
+
+def _make_audio_segment_mock(duration_ms: int = 500) -> MagicMock:
+    """Create a mock AudioSegment that supports len(), +, and export."""
+    seg = MagicMock()
+    seg.__len__ = MagicMock(return_value=duration_ms)
+    seg.__add__ = MagicMock(return_value=seg)
+    seg.__iadd__ = MagicMock(return_value=seg)  # Override MagicMock's built-in __iadd__
+
+    def _fake_export(path: str, format: str = "wav") -> None:
+        """Actually create the file so os.path.exists works."""
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        with open(path, "wb") as f:
+            f.write(FAKE_WAV_BYTES)
+
+    seg.export = MagicMock(side_effect=_fake_export)
+    return seg
+
+
+# ── Mock pydub before import (audioop removed in Python 3.13) ──
+_mock_pydub = MagicMock()
+_mock_pydub.AudioSegment = MagicMock()
+_mock_pydub.AudioSegment.silent = MagicMock(side_effect=lambda duration, **kw: _make_audio_segment_mock(duration))
+_mock_pydub.AudioSegment.from_file = MagicMock(side_effect=lambda *a, **kw: _make_audio_segment_mock(800))
+
+sys.modules['pydub'] = _mock_pydub
+
 from app.services.tts_service import synthesize_full_script
 
 
