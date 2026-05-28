@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Box, Typography, Paper, TextField, Button, Alert, Stack,
-  InputAdornment, IconButton, Divider, Chip, Link, CircularProgress,
+  InputAdornment, IconButton, Divider, Chip, Link,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -11,16 +11,10 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getConfig, getConfigStatus, updateConfig, type ConfigStatus } from '../services/api';
+import { getConfigStatus, updateConfig, type ConfigStatus } from '../services/api';
 
 export default function ConfigPage() {
   const qc = useQueryClient();
-
-  // 获取当前配置
-  const { data: configData, isLoading: configLoading } = useQuery({
-    queryKey: ['config'],
-    queryFn: () => getConfig().then((r) => r.data),
-  });
 
   // 获取服务状态
   const { data: statusData, refetch: refetchStatus } = useQuery<ConfigStatus>({
@@ -31,13 +25,6 @@ export default function ConfigPage() {
   const [apiKey, setApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [verifyResult, setVerifyResult] = useState<'none' | 'success' | 'error'>('none');
-
-  // 初始化 key
-  React.useEffect(() => {
-    if (configData?.moonshot_api_key) {
-      setApiKey(configData.moonshot_api_key);
-    }
-  }, [configData]);
 
   // 保存配置
   const saveMutation = useMutation({
@@ -139,36 +126,32 @@ export default function ConfigPage() {
           </Typography>
         </Stack>
 
-        {configLoading ? (
-          <CircularProgress size={24} />
-        ) : (
-          <TextField
-            label="API Key"
-            type={showKey ? 'text' : 'password'}
-            fullWidth
-            value={apiKey}
-            onChange={(e) => {
-              setApiKey(e.target.value);
-              setVerifyResult('none');
-            }}
-            placeholder="sk-..."
-            helperText="用于调用 Moonshot AI 大语言模型进行角色分析和情感标注"
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowKey(!showKey)}
-                    edge="end"
-                    size="small"
-                  >
-                    {showKey ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            sx={{ mb: 2 }}
-          />
-        )}
+        <TextField
+          label="API Key"
+          type={showKey ? 'text' : 'password'}
+          fullWidth
+          value={apiKey}
+          onChange={(e) => {
+            setApiKey(e.target.value);
+            setVerifyResult('none');
+          }}
+          placeholder="sk-..."
+          helperText="用于调用 Moonshot AI 大语言模型进行角色分析和情感标注"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  onClick={() => setShowKey(!showKey)}
+                  edge="end"
+                  size="small"
+                >
+                  {showKey ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          sx={{ mb: 2 }}
+        />
 
         <Stack direction="row" spacing={1.5}>
           <Button

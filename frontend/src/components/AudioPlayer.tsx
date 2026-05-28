@@ -4,7 +4,7 @@ import {
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
-import DownloadIcon from '@mui/icons-material/Download';
+import AudioFileIcon from '@mui/icons-material/AudioFile';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import Replay10Icon from '@mui/icons-material/Replay10';

@@ -123,9 +123,6 @@ export const getTTSVoices = () =>
 
 // ── Config ─────────────────────────────────────────────────────
 
-export const getConfig = () =>
-  api.get<{ moonshot_api_key: string }>('/config/status');
-
 export const getConfigStatus = () =>
   api.get<ConfigStatus>('/config/status');
 
