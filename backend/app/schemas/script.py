@@ -24,6 +24,7 @@ class ScriptResponse(ScriptBase):
     content: Optional[str] = None
     encoding: str = "utf-8"
     is_analyzed: bool = False
+    status: str = "uploaded"
     created_at: datetime
     updated_at: Optional[datetime] = None
     

@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import AnalysisPage from './pages/AnalysisPage';
 import ResultPage from './pages/ResultPage';
 import ConfigPage from './pages/ConfigPage';
+import MyScriptsPage from './pages/MyScriptsPage';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 30000 } } });
 
@@ -23,6 +24,7 @@ function NavBar() {
           ScriptMind AI
         </Typography>
         <Button sx={{ color: '#64748b' }} onClick={() => navigate('/')}>首页</Button>
+        <Button sx={{ color: '#64748b' }} onClick={() => navigate('/my-scripts')}>我的台本</Button>
         <Button sx={{ color: '#64748b' }} onClick={() => navigate('/config')}>配置</Button>
       </Toolbar>
     </AppBar>
@@ -40,6 +42,7 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/analysis/:scriptId" element={<AnalysisPage />} />
+              <Route path="/my-scripts" element={<MyScriptsPage />} />
               <Route path="/result/:taskId" element={<ResultPage />} />
               <Route path="/config" element={<ConfigPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />

@@ -133,3 +133,31 @@ async def get_script(
             detail=f"Script with ID {script_id} not found"
         )
     return script
+
+
+@router.delete("/script/{script_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_script(
+    script_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Delete a script and its associated file.
+
+    Args:
+        script_id: Script ID
+        db: Database session
+
+    Raises:
+        HTTPException: If script not found
+    """
+    script = db.query(Script).filter(Script.id == script_id).first()
+    if not script:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Script not found"
+        )
+    # Delete file from disk
+    if os.path.exists(script.file_path):
+        os.remove(script.file_path)
+    db.delete(script)
+    db.commit()
