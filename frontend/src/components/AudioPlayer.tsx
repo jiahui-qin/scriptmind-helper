@@ -10,7 +10,6 @@ import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import Replay10Icon from '@mui/icons-material/Replay10';
 import Forward30Icon from '@mui/icons-material/Forward30';
 import SubtitlesIcon from '@mui/icons-material/Subtitles';
-import AudioFileIcon from '@mui/icons-material/AudioFile';
 
 interface AudioPlayerProps {
   audioUrl: string;
