@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+code = """import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Box, Typography, Paper, LinearProgress, Alert, Button, Chip, Stack, Grid,
 } from '@mui/material';
@@ -149,3 +149,8 @@ export default function AnalysisPage() {
     </Box>
   );
 }
+"""
+
+with open('/c/Users/pcl/AppData/Local/Temp/scriptmind-helper/frontend/src/pages/AnalysisPage.tsx', 'w', encoding='utf-8') as f:
+    f.write(code)
+print('OK:', len(code), 'chars')
