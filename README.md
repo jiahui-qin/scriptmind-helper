@@ -1,166 +1,246 @@
-# ScriptMind AI — 台本分析助手
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi" alt="FastAPI">
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React">
+  <img src="https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat-square&logo=typescript" alt="TS">
+  <img src="https://img.shields.io/badge/Tests-79%2F79-brightgreen?style=flat-square" alt="Tests">
+  <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License">
+</p>
 
-ScriptMind AI 是一款智能台本分析工具，帮助编剧、配音导演和内容创作者快速分析台本角色、标注情感并生成 TTS 语音预览。
+<h1 align="center">🎭 ScriptMind AI</h1>
+<p align="center"><strong>AI 驱动的剧本角色分析与语音合成工具</strong></p>
 
-## 功能特性
+---
 
-- 📄 **台本上传**：支持 `.txt` 格式台本文件上传与解析
-- 🤖 **AI 角色分析**：基于 MiMo LLM 自动识别角色并分析性格特征
-- 🎭 **情感标注**：为每句台词自动标注情感标签、语气、语速和情绪强度
-- 🔊 **TTS 语音合成**：调用 MiMo TTS API 生成完整音频预览，附带 SRT 字幕
+## ✨ 功能特性
 
-## 技术栈
-
-| 层级 | 技术 |
+| 功能 | 描述 |
 |------|------|
-| 前端 | React 18 + Vite + TypeScript + MUI (Material UI) + Tailwind CSS |
-| 后端 | Python 3.11+ / FastAPI + SQLAlchemy + Pydantic v2 |
-| 数据库 | SQLite (开发) / PostgreSQL (生产推荐) |
-| 缓存 | Redis (可选) |
-| AI | Moonshot (MiMo) API — Chat Completions + TTS v2.5 |
-| 部署 | Docker + Docker Compose + Nginx |
+| 📄 **台本上传** | 拖拽上传 `.txt` 台本文件，支持 UTF-8 编码，最大 10MB |
+| 🤖 **AI 角色分析** | 调用 MiMo (小米) `mimo-v2.5-pro` 大模型，自动识别角色并分析性格 |
+| 💬 **情感标注** | 为每一句台词打上情感标签（开心/悲伤/愤怒/惊讶/中性等）和强度值 |
+| 🎙️ **TTS 语音合成** | 调用 MiMo `mimo-v2.5-tts` 模型，支持 9 种音色，生成自然语音 |
+| 🎬 **音频导出** | 合并全剧音频为单个 `.wav` 文件，同步生成 `.srt` 字幕 |
 
-## 项目结构
+---
+
+## 🧪 测试结果
+
+### MiMo API 实测数据
+
+使用以下台本实测 MiMo API（2026-05-28）：
+
+<details>
+<summary><b>📜 测试台本（点击展开）</b></summary>
 
 ```
-scriptmind-helper/
-├── backend/                    # FastAPI 后端
-│   ├── app/
-│   │   ├── api/endpoints/      # API 路由 (upload/analysis/tts/config)
-│   │   ├── models/             # SQLAlchemy 数据模型
-│   │   ├── schemas/            # Pydantic 请求/响应模型
-│   │   ├── services/           # 业务逻辑层
-│   │   │   ├── file_parser.py   # 台本文件解析
-│   │   │   ├── role_analyzer.py # AI 角色分析
-│   │   │   ├── emotion_tagger.py# 情感标注
-│   │   │   └── tts_service.py  # TTS 合成
-│   │   ├── config.py           # 应用配置
-│   │   ├── database.py         # 数据库配置
-│   │   └── main.py             # FastAPI 应用入口
-│   ├── tests/                  # 单元测试 & 集成测试
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── create_tables.py
-├── frontend/                   # React 前端
-│   ├── src/
-│   │   ├── pages/              # 页面组件
-│   │   ├── components/         # 公共组件
-│   │   ├── services/           # API 调用封装
-│   │   └── App.tsx             # 应用入口
-│   ├── Dockerfile
-│   ├── nginx.conf
-│   └── package.json
-├── docs/                       # 设计文档 (PRD / 架构设计)
-├── data/                       # 上传文件存储
-├── docker-compose.yml          # Docker 编排配置
-├── .env.example                # 环境变量模板
-└── README.md
+第一幕：咖啡馆
+服务员：欢迎光临，请问需要点什么？
+李明：一杯美式咖啡，谢谢。
+服务员：好的，请稍等。
+
+第二幕：办公室
+张总：李明，上次的方案客户很满意。
+李明：（惊喜）真的吗？太好了！
+张总：但是还有几个细节需要调整，今天能改完吗？
+李明：（叹气）好吧，我今天加班。
+
+第三幕：深夜
+小红：这么晚还在加班？
+李明：（疲惫）没办法，客户明天要看。
+小红：我给你带了夜宵，先吃点吧。
+李明：（感动）谢谢你，小红。
 ```
 
-## 快速开始
+</details>
 
-### 环境要求
+#### 角色分析结果
 
-- Python 3.11+
-- Node.js 18+
-- npm 9+
+| 角色 | 性别 | 年龄 | 音色推荐 | 性格特征 |
+|------|------|------|----------|----------|
+| 服务员 | 未知 | 25 | 温和礼貌 | 专业、友好，展现职业化服务态度 |
+| 李明 | 男 | 30 | 沉稳 | 勤奋认真，面对加班感疲惫，但仍负责到底 |
+| 张总 | 男 | 45 | 成熟稳重 | 权威、注重细节和效率，下达任务直接果断 |
+| 小红 | 女 | 28 | 温柔亲切 | 体贴温暖，深夜送夜宵展现细腻关怀 |
 
-### 本地开发
+#### TTS 合成测试
+
+```python
+# MiMo TTS v2.5 调用示例
+resp = client.chat.completions.create(
+    model="mimo-v2.5-tts",
+    messages=[...],
+    audio={"format": "wav", "voice": "Chloe"}
+)
+# ✅ 成功生成 143KB WAV 音频
+```
+
+### 单元测试覆盖
+
+```
+79/79 passed (100%)
+├── test_file_parser.py ........... 19 passed
+├── test_role_analyzer.py ......... 14 passed
+├── test_emotion_tagger.py ........ 10 passed
+├── test_tts_service.py ........... 10 passed
+└── test_api.py .................. 26 passed
+```
+
+---
+
+## 🛠 技术栈
+
+### 后端
+- **框架**: FastAPI 0.115 + Uvicorn
+- **ORM**: SQLAlchemy 2.0 + SQLite
+- **AI**: MiMo (Xiaomi) API — OpenAI SDK 调用 `mimo-v2.5-pro` / `mimo-v2.5-tts`
+- **音频**: pydub (拼接) + pysrt (字幕)
+- **异步**: Celery + Redis (可选，MVP 使用 FastAPI BackgroundTasks)
+
+### 前端
+- **框架**: React 18 + Vite 5 + TypeScript 5.6
+- **UI**: MUI v5 + Tailwind CSS v3
+- **状态管理**: Zustand v5
+- **数据获取**: TanStack React Query v5
+
+---
+
+## 🚀 快速开始
+
+### 1. 克隆并配置
 
 ```bash
-# 1. 克隆项目
-git clone <repo-url>
-cd scriptmind-helper
-
-# 2. 配置环境变量
+git clone https://github.com/jiahui-qin/scriptmind-helper.git
+cd scriptmind-helper/backend
 cp .env.example .env
-# 编辑 .env，填入你的 Moonshot API Key
+```
 
-# 3. 启动后端
+编辑 `.env`，填入你的 MiMo API Key（[获取地址](https://platform.xiaomimimo.com)）:
+
+```env
+MIMO_API_KEY=sk-your-key-here
+SQLITE_DB=scriptmind.db
+```
+
+### 2. 启动后端
+
+```bash
 cd backend
 pip install -r requirements.txt
-python create_tables.py
 uvicorn app.main:app --reload --port 8000
+```
 
-# 4. 启动前端（新终端）
+访问 http://localhost:8000/docs 查看 Swagger API 文档。
+
+### 3. 启动前端
+
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-前端访问：http://localhost:5173
-后端 API 文档：http://localhost:8000/docs
+访问 http://localhost:3000，上传台本开始使用。
 
-### Docker 部署
-
-```bash
-# 1. 配置环境变量
-cp .env.example .env
-# 编辑 .env，填入你的 Moonshot API Key
-
-# 2. 构建并启动
-docker compose up -d
-
-# 3. 查看日志
-docker compose logs -f
-
-# 4. 停止
-docker compose down
-```
-
-前端访问：http://localhost:3000
-后端 API 文档：http://localhost:8000/docs
-
-## API 文档
-
-启动后端后访问 http://localhost:8000/docs 查看 Swagger UI 交互式文档。
-
-主要接口：
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/health` | 健康检查 |
-| POST | `/api/v1/upload/script` | 上传台本文件 |
-| GET | `/api/v1/upload/scripts` | 台本列表 |
-| GET | `/api/v1/upload/script/{id}` | 获取台本详情 |
-| POST | `/api/v1/analysis/{id}/analyze` | 触发 AI 分析 |
-| GET | `/api/v1/analysis/{id}` | 获取分析结果 |
-| POST | `/api/v1/tts/{id}/synthesize` | 触发 TTS 合成 |
-| GET | `/api/v1/tts/tasks` | TTS 任务列表 |
-| GET | `/api/v1/tts/tasks/{task_id}` | TTS 任务状态 |
-| GET | `/api/v1/config/status` | 配置状态 |
-| POST | `/api/v1/config/` | 更新配置 |
-
-## 配置说明
-
-### 获取 Moonshot API Key
-
-1. 访问 [Moonshot AI 开放平台](https://platform.moonshot.cn/)
-2. 注册/登录账号
-3. 在控制台创建 API Key
-4. 将 Key 填入 `.env` 文件或通过 `/api/v1/config/` 接口配置
-
-### 环境变量
-
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `MOONSHOT_API_KEY` | Moonshot API 密钥 | 必填 |
-| `SQLITE_DB` | SQLite 数据库文件 | `scriptmind.db` |
-| `REDIS_URL` | Redis 连接地址 | `redis://redis:6379/0` |
-| `MAX_FILE_SIZE` | 上传文件大小限制 (字节) | `10485760` (10MB) |
-
-## 运行测试
+### 4. Docker 部署
 
 ```bash
-cd backend
-pip install pytest pytest-mock httpx
-python -m pytest tests/ -v
+docker-compose up -d
+# 前端: http://localhost:3000
+# 后端: http://localhost:8000/docs
 ```
-
-## License
-
-MIT
 
 ---
 
-Made with ❤️ by ScriptMind Team
+## 📡 API 端点
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| `POST` | `/api/v1/upload/script` | 上传台本文件 (multipart/form-data) |
+| `GET` | `/api/v1/upload/script/{id}` | 获取台本信息 |
+| `POST` | `/api/v1/analysis/{id}/analyze` | 触发 AI 角色分析（异步） |
+| `GET` | `/api/v1/analysis/{id}` | 获取分析结果（角色+台词+情感） |
+| `POST` | `/api/v1/tts/{id}/synthesize` | 触发 TTS 语音合成（异步） |
+| `GET` | `/api/v1/tts/tasks/{id}` | 查询 TTS 任务状态 |
+| `GET` | `/api/v1/config/status` | 检查 API Key 配置状态 |
+| `POST` | `/api/v1/config/` | 更新 API Key 配置 |
+| `GET` | `/health` | 健康检查 |
+
+---
+
+## 📁 项目结构
+
+```
+scriptmind-helper/
+├── backend/                 # FastAPI 后端
+│   ├── app/
+│   │   ├── api/endpoints/   # REST API (upload/analysis/tts/config)
+│   │   ├── models/          # SQLAlchemy 模型 (Script/Role/Line/TTSTask)
+│   │   ├── schemas/         # Pydantic V2 校验
+│   │   ├── services/        # 业务逻辑 (parser/analyzer/tagger/tts)
+│   │   └── tasks/           # Celery 异步任务
+│   ├── tests/               # 79 个单元+集成测试
+│   ├── data/uploads/        # 上传文件存储
+│   └── data/output/         # 音频/字幕输出
+├── frontend/                # React + Vite 前端
+│   └── src/
+│       ├── pages/           # Home / Analysis / Result / Config
+│       ├── components/      # ScriptUploader / RoleCard / AudioPlayer
+│       ├── services/        # Axios API 封装
+│       ├── store/           # Zustand 状态管理
+│       └── types/           # TypeScript 类型定义
+├── docs/                    # 设计文档 (PRD/Architecture/Task Breakdown)
+├── docker-compose.yml       # Docker 编排
+└── .env.example             # 环境变量模板
+```
+
+---
+
+## 🔧 配置说明
+
+| 环境变量 | 默认值 | 说明 |
+|----------|--------|------|
+| `MIMO_API_KEY` | (必填) | MiMo 平台 API Key |
+| `MIMO_API_BASE` | `https://api.xiaomimimo.com/v1` | MiMo API 端点 |
+| `MIMO_CHAT_MODEL` | `mimo-v2.5-pro` | 对话模型 |
+| `MIMO_TTS_MODEL` | `mimo-v2.5-tts` | TTS 模型 |
+| `SQLITE_DB` | `scriptmind.db` | 数据库文件路径 |
+| `REDIS_URL` | `redis://localhost:6379/0` | Redis 连接（Celery 模式） |
+| `MAX_FILE_SIZE` | `10485760` (10MB) | 上传文件大小限制 |
+
+### 获取 MiMo API Key
+
+1. 访问 [MiMo 开放平台](https://platform.xiaomimimo.com)
+2. 注册/登录小米账号
+3. 创建 API Key
+4. 填入 `.env` 文件
+
+> MiMo API 使用 OpenAI 兼容格式，可直接用 `openai` Python SDK 调用。
+
+---
+
+## 🗺 开发路线
+
+- [x] **T01** — 项目脚手架 (FastAPI + React + Docker)
+- [x] **T02** — 后端核心 API (文件上传 / 角色分析 / TTS)
+- [x] **T03** — 前端核心页面 (拖拽上传 / 角色卡片 / 音频播放)
+- [x] **T04** — 自动化测试 (79/79 通过)
+- [x] **T05** — Docker 部署 + 文档
+- [ ] **T06** — 后台任务迁移 Celery
+- [ ] **T07** — 多格式台本支持 (PDF/Word/Markdown)
+- [ ] **T08** — 用户系统 + 历史记录
+
+---
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+```bash
+# 运行测试
+cd backend && python -m pytest tests/ -v --tb=short
+```
+
+## 📄 许可证
+
+MIT License © 2025 [jiahui-qin](https://github.com/jiahui-qin)
