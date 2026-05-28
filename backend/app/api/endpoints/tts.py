@@ -1,116 +1,83 @@
-"""TTS API endpoints for text-to-speech synthesis."""
-from fastapi import APIRouter, Depends, HTTPException, status
+"""TTS API endpoints for MiMo text-to-speech synthesis."""
+import logging
+import traceback
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import Dict, Any
+import os
 
-from app.database import get_db
+from app.database import get_db, SessionLocal
 from app.models.tts_task import TTSTask
-from app.schemas.tts_task import TTSTaskResponse, TTSTaskStatus
+from app.models.script import Script
+from app.services.tts_service import synthesize_full_script
 
+logger = logging.getLogger("scriptmind.tts")
 router = APIRouter()
 
 
+def _run_tts(script_id: int, role_voice_map: Dict[int, str]):
+    db = SessionLocal()
+    try:
+        script = db.query(Script).filter(Script.id == script_id).first()
+        if not script:
+            return
+        from app.models.line import Line
+        lines = db.query(Line).filter(Line.script_id == script_id).order_by(Line.line_number).all()
+        lines_dict = [
+            {
+                "id": l.id, "line_number": l.line_number, "content": l.content,
+                "role_id": l.role_id, "emotion_tag": l.emotion_tag,
+                "speech_rate": 1.0, "emotion_intensity": l.emotion_intensity or 0.5,
+            }
+            for l in lines
+        ]
+        actual_role_voice_map = {int(k): v for k, v in role_voice_map.items()}
+        output_dir = os.path.join("data", "output")
+        logger.info(f"[tts:{script_id}] Synthesizing {len(lines_dict)} lines with {len(actual_role_voice_map)} voices")
+        result = synthesize_full_script(lines_dict, actual_role_voice_map, output_dir, script_id)
+        task = db.query(TTSTask).filter(TTSTask.script_id == script_id).order_by(TTSTask.id.desc()).first()
+        if task:
+            task.status = "completed"
+            task.audio_url = result["audio_path"]
+            task.subtitle_url = result["srt_path"]
+            db.commit()
+            logger.info(f"[tts:{script_id}] Completed: {result['audio_path']}")
+    except Exception:
+        logger.error(f"[tts:{script_id}] Failed:/n{traceback.format_exc()}")
+        db.rollback()
+        task = db.query(TTSTask).filter(TTSTask.script_id == script_id).order_by(TTSTask.id.desc()).first()
+        if task:
+            task.status = "failed"
+            task.error_message = traceback.format_exc()[-500:]
+            db.commit()
+    finally:
+        db.close()
+
+
 @router.post("/{script_id}/synthesize", status_code=status.HTTP_202_ACCEPTED)
-async def trigger_tts(
-    script_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Trigger TTS synthesis for a script.
-    
-    Args:
-        script_id: Script ID to synthesize
-        db: Database session
-        
-    Returns:
-        Dict: TTS task initiation status
-        
-    Raises:
-        HTTPException: If script not found or not analyzed
-    """
-    from app.models.script import Script
-    
+async def trigger_tts(script_id: int, body: Dict[str, Any], background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     script = db.query(Script).filter(Script.id == script_id).first()
     if not script:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Script with ID {script_id} not found"
-        )
-    
+        raise HTTPException(status_code=404, detail=f"Script {script_id} not found")
     if not script.is_analyzed:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Script must be analyzed before TTS synthesis"
-        )
-    
-    # TODO: Implement actual TTS task creation with Celery
-    # For now, return a placeholder response
-    return {
-        "script_id": script_id,
-        "task_id": "placeholder-task-id",
-        "status": "pending",
-        "message": "TTS task has been queued"
-    }
+        raise HTTPException(status_code=400, detail="请先完成角色分析后再生成语音")
+    role_voice_map = body.get("role_voice_map", {})
+    task = TTSTask(script_id=script_id, status="pending")
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+    background_tasks.add_task(_run_tts, script_id, role_voice_map)
+    logger.info(f"[tts:{script_id}] Task {task.id} queued")
+    return {"script_id": script_id, "task_id": task.id, "status": "pending"}
 
 
-@router.get("/tasks/{task_id}", response_model=TTSTaskStatus)
-async def get_tts_status(
-    task_id: str,
-    db: Session = Depends(get_db)
-):
-    """
-    Get TTS task status.
-    
-    Args:
-        task_id: Celery task ID
-        db: Database session
-        
-    Returns:
-        TTSTaskStatus: Task status details
-        
-    Raises:
-        HTTPException: If task not found
-    """
-    task = db.query(TTSTask).filter(TTSTask.task_id == task_id).first()
+@router.get("/tasks/{task_id}")
+async def get_tts_status(task_id: int, db: Session = Depends(get_db)):
+    task = db.query(TTSTask).filter(TTSTask.id == task_id).first()
     if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"TTS task with ID {task_id} not found"
-        )
-    
+        raise HTTPException(status_code=404, detail=f"TTS task {task_id} not found")
     return {
-        "task_id": task.task_id,
-        "status": task.status,
-        "progress": task.progress,
-        "audio_url": task.audio_url,
-        "subtitle_url": task.subtitle_url,
-        "error_message": task.error_message
+        "task_id": task.id, "script_id": task.script_id,
+        "status": task.status, "audio_url": task.audio_url,
+        "subtitle_url": task.subtitle_url, "error_message": task.error_message,
     }
-
-
-@router.get("/tasks", response_model=list[TTSTaskResponse])
-async def list_tts_tasks(
-    script_id: int = None,
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db)
-):
-    """
-    List TTS tasks.
-    
-    Args:
-        script_id: Optional filter by script ID
-        skip: Number of records to skip
-        limit: Maximum number of records to return
-        db: Database session
-        
-    Returns:
-        List[TTSTaskResponse]: List of TTS tasks
-    """
-    query = db.query(TTSTask)
-    
-    if script_id:
-        query = query.filter(TTSTask.script_id == script_id)
-    
-    tasks = query.offset(skip).limit(limit).all()
-    return tasks
