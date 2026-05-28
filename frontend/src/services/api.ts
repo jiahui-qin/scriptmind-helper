@@ -126,7 +126,7 @@ export const getTTSVoices = () =>
 export const getConfigStatus = () =>
   api.get<ConfigStatus>('/config/status');
 
-export const updateConfig = (data: { moonshot_api_key: string }) =>
+export const updateConfig = (data: { mimo_api_key: string }) =>
   api.post('/config/', data);
 
 export default api;
