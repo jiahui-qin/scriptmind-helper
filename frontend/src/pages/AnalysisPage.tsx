@@ -235,7 +235,7 @@ export default function AnalysisPage() {
             }}
           >
             生成语音
-          </Typography>
+          </Button>
         </Box>
       )}
 
