@@ -1,38 +1,31 @@
 """Config API endpoints for application configuration."""
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter
 from typing import Dict, Any
 import os
-from pydantic_settings import BaseSettings
+from app.config import settings
 
 router = APIRouter()
 
 
-class ConfigUpdate(BaseSettings):
-    moonshot_api_key: str = ""
-
-
 @router.get("/status")
 async def get_config_status():
-    from app.config import settings
+    key_ok = bool(settings.MIMO_API_KEY)
     return {
-        "moonshot_api_configured": bool(os.getenv("MOONSHOT_API_KEY") or getattr(settings, "MOONSHOT_API_KEY", "")),
+        "mimo_api_configured": key_ok,
         "database_type": "sqlite",
-        "redis_configured": bool(getattr(settings, "REDIS_URL", "")),
-        "max_file_size_mb": getattr(settings, "MAX_FILE_SIZE", 10 * 1024 * 1024) // 1024 // 1024,
+        "redis_configured": bool(settings.REDIS_URL),
+        "max_file_size_mb": settings.MAX_FILE_SIZE // 1024 // 1024,
         "features": {
             "upload": True,
-            "analysis": bool(os.getenv("MOONSHOT_API_KEY") or getattr(settings, "MOONSHOT_API_KEY", "")),
-            "tts": bool(os.getenv("MOONSHOT_API_KEY") or getattr(settings, "MOONSHOT_API_KEY", "")),
+            "analysis": key_ok,
+            "tts": key_ok,
         }
     }
 
 
 @router.post("/")
 async def update_config(body: Dict[str, Any]):
-    from app.config import settings
-    key = body.get("moonshot_api_key", "")
-    # Write to .env file
+    key = body.get("mimo_api_key", "")
     env_path = ".env"
     lines = []
     if os.path.exists(env_path):
@@ -40,12 +33,12 @@ async def update_config(body: Dict[str, Any]):
             lines = f.readlines()
     found = False
     for i, line in enumerate(lines):
-        if line.startswith("MOONSHOT_API_KEY="):
-            lines[i] = f"MOONSHOT_API_KEY={key}\n"
+        if line.startswith("MIMO_API_KEY="):
+            lines[i] = f"MIMO_API_KEY={key}\n"
             found = True
             break
     if not found:
-        lines.append(f"MOONSHOT_API_KEY={key}\n")
+        lines.append(f"MIMO_API_KEY={key}\n")
     with open(env_path, "w") as f:
         f.writelines(lines)
-    return {"status": "ok", "moonshot_api_configured": bool(key)}
+    return {"status": "ok", "mimo_api_configured": bool(key)}

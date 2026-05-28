@@ -1,5 +1,5 @@
 """Line model - represents individual script lines."""
-from sqlalchemy import Column, Integer, Text, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, Text, String, Float, DateTime, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
