@@ -28,7 +28,7 @@ class ScriptResponse(ScriptBase):
     updated_at: Optional[datetime] = None
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ScriptAnalysisResponse(BaseModel):
@@ -40,4 +40,4 @@ class ScriptAnalysisResponse(BaseModel):
     roles: List[dict] = []
     
     class Config:
-        orm_mode = True
+        from_attributes = True
