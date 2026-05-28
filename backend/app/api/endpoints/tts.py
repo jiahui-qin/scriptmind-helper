@@ -81,3 +81,19 @@ async def get_tts_status(task_id: int, db: Session = Depends(get_db)):
         "status": task.status, "audio_url": task.audio_url,
         "subtitle_url": task.subtitle_url, "error_message": task.error_message,
     }
+
+
+@router.get("/tasks/{task_id}/download")
+async def download_tts_file(task_id: int, type: str = "audio", db: Session = Depends(get_db)):
+    """Download generated audio or SRT file."""
+    from fastapi.responses import FileResponse
+    task = db.query(TTSTask).filter(TTSTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if task.status != "completed":
+        raise HTTPException(status_code=400, detail="TTS task not completed yet")
+    file_path = task.audio_url if type == "audio" else task.subtitle_url
+    if not file_path or not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    filename = f"script_{task.script_id}_{'audio' if type == 'audio' else 'subtitle'}.{'wav' if type == 'audio' else 'srt'}"
+    return FileResponse(file_path, filename=filename, media_type="application/octet-stream")

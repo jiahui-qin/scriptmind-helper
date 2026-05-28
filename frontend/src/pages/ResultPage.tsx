@@ -224,8 +224,8 @@ export default function ResultPage() {
               音频播放
             </Typography>
             <AudioPlayer
-              audioUrl={status.audio_url}
-              srtUrl={status.subtitle_url || undefined}
+              audioUrl={`/api/v1/tts/tasks/${taskId}/download?type=audio`}
+              srtUrl={`/api/v1/tts/tasks/${taskId}/download?type=srt`}
               title={`台本语音合成 - ${taskId}`}
             />
           </Box>

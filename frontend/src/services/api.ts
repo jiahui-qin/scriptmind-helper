@@ -138,5 +138,5 @@ export const updateRole = (roleId: number, data: Record<string, any>) =>
   api.put(`/roles/${roleId}`, data)
 
 export const getVoices = () => [
-  "Chloe", "James", "Emma", "William", "Ava", "Michael", "Sophia", "Daniel", "Mia",
+  "mimo_default", "冰糖", "茉莉", "苏打", "白桦", "Mia", "Chloe", "Milo", "Dean",
 ]

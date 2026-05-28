@@ -11,7 +11,7 @@ import pysrt
 from app.config import settings
 
 # Supported MiMo TTS voices
-MIMO_VOICES = ["Chloe", "James", "Emma", "William", "Ava", "Michael", "Sophia", "Daniel", "Mia"]
+MIMO_VOICES = ["mimo_default", "冰糖", "茉莉", "苏打", "白桦", "Mia", "Chloe", "Milo", "Dean"]
 
 
 def _call_mimo_tts(text: str, voice: str = "Chloe", speed: float = 1.0) -> bytes:
