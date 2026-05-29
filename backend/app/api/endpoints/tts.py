@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 def _run_tts(script_id: int, role_voice_map: Dict[int, str], include_narration: bool = True,
-             narration_voice: str = "冰糖", line_gap_ms: int = 0):
+             narration_voice: str = "冰糖", line_gap_ms: int = 300):
     db = SessionLocal()
     task_id = None
     try:
