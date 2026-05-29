@@ -42,8 +42,8 @@ async def batch_update_lines(body: LineBatchUpdate, db: Session = Depends(get_db
             raise HTTPException(status_code=400, detail="line_ids required for by_ids mode")
         lines = db.query(Line).filter(Line.id.in_(body.line_ids)).all()
     elif body.mode == "by_role":
-        if not body.script_id or body.from_role_id is None:
-            raise HTTPException(status_code=400, detail="script_id and from_role_id required for by_role mode")
+        if not body.script_id:
+            raise HTTPException(status_code=400, detail="script_id required for by_role mode")
         lines = db.query(Line).filter(
             Line.script_id == body.script_id,
             Line.role_id == body.from_role_id,
