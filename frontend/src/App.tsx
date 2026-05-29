@@ -43,7 +43,6 @@ function App() {
       background: dark
         ? { default: '#11111b', paper: '#1e1e2e' }
         : { default: '#f8fafc', paper: '#ffffff' },
-      text: dark ? { primary: '#cdd6f4', secondary: '#a6adc8' } : undefined,
     },
     typography: { fontFamily: '"Roboto", "Noto Sans SC", sans-serif' },
   }), [dark]);
