@@ -3,7 +3,6 @@
   <img src="https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi" alt="FastAPI">
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React">
   <img src="https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat-square&logo=typescript" alt="TS">
-  <img src="https://img.shields.io/badge/Tests-79%2F79-brightgreen?style=flat-square" alt="Tests">
   <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License">
 </p>
 
@@ -14,77 +13,58 @@
 
 ## ✨ 功能特性
 
+### 核心流程
+
 | 功能 | 描述 |
 |------|------|
 | 📄 **台本上传** | 拖拽上传 `.txt` 台本文件，支持 UTF-8 编码，最大 10MB |
-| 🤖 **AI 角色分析** | 调用 MiMo (小米) `mimo-v2.5-pro` 大模型，自动识别角色并分析性格 |
-| 💬 **情感标注** | 为每一句台词打上情感标签（开心/悲伤/愤怒/惊讶/中性等）和强度值 |
-| 🎙️ **TTS 语音合成** | 调用 MiMo `mimo-v2.5-tts` 模型，支持 9 种音色，生成自然语音 |
-| 🎬 **音频导出** | 合并全剧音频为单个 `.wav` 文件，同步生成 `.srt` 字幕 |
+| ✏️ **分析前编辑** | 上传后可直接编辑原文，修正角色名/格式后重新分析 |
+| 🤖 **AI 角色分析** | MiMo `mimo-v2.5-pro` 识别角色，推断性别/年龄/性格/语调/音色/腔调/方言等属性 |
+| 💬 **情感标注** | 每句台词标注基础情绪（14种）+ 复合情绪（9种）+ 强度值 |
+| 🎙️ **TTS 语音合成** | MiMo `mimo-v2.5-tts`，9 种音色可选，逐行合成 + MD5 缓存 |
+| 🎬 **音频导出** | 合并为单个 `.wav` + `.srt` 字幕，句间间隙可配置（0-2000ms） |
 
----
+### 分析页编辑功能
 
-## 🧪 测试结果
+| 功能 | 描述 |
+|------|------|
+| 🔄 **逐行编辑** | 每行下拉选择角色/基础情绪/复合情绪，即时保存 |
+| ✅ **批量操作** | 勾选多行 → 统一修改角色/情绪 |
+| ⚡ **快速转移** | 选来源角色 → 目标角色，一键转移全部对话（支持旁白） |
+| 🎨 **风格标签** | 预置 + 自由输入，自定义值持久化跨脚本复用 |
+| ➕ **在线创建角色** | 下拉选"创建新角色"，弹窗输入名称/性别即可 |
+| 🔍 **按角色过滤** | 顶部下拉筛选，快速聚焦特定角色台词 |
 
-### MiMo API 实测数据
+### 角色属性体系
 
-使用以下台本实测 MiMo API（2026-05-28）：
+| 类别 | 可选值 |
+|------|--------|
+| 基础情绪 | 开心 / 悲伤 / 愤怒 / 恐惧 / 惊讶 / 兴奋 / 委屈 / 平静 / 冷漠 |
+| 复合情绪 | 怅然 / 欣慰 / 无奈 / 愧疚 / 释然 / 嫉妒 / 厌倦 / 忐忑 / 动情 |
+| 整体语调 | 温柔 / 高冷 / 活泼 / 严肃 / 慵懒 / 俏皮 / 深沉 / 干练 / 凌厉 |
+| 音色定位 | 磁性 / 醇厚 / 清亮 / 空灵 / 稚嫩 / 苍老 / 甜美 / 沙哑 / 醇雅 |
+| 人设腔调 | 夹子音 / 御姐音 / 正太音 / 大叔音 / 台湾腔 |
+| 方言 | 东北话 / 四川话 / 河南话 / 粤语（可自由输入） |
+| 角色扮演 | 孙悟空 / 林黛玉（可自由输入） |
 
-<details>
-<summary><b>📜 测试台本（点击展开）</b></summary>
+### TTS 合成
 
-```
-第一幕：咖啡馆
-服务员：欢迎光临，请问需要点什么？
-李明：一杯美式咖啡，谢谢。
-服务员：好的，请稍等。
+| 功能 | 描述 |
+|------|------|
+| 🎵 **音色试听** | TTS 对话框每个音色旁有 ▶ 试听按钮，缓存到本地 |
+| ⏱️ **句间间隙** | 滑块 0-2000ms，默认推荐 300ms |
+| 📊 **合成进度** | 逐行合成实时进度条，ResultPage 显示百分比 |
+| 🛡️ **容错跳过** | 单句失败自动跳过继续，最终标注失败行号 |
+| 📋 **参数展示** | 结果页显示合成参数：间隙/总行数/旁白/角色音色配置 |
+| 💾 **TTS 缓存** | 同文本+同音色 MD5 缓存，重复合成秒出，节省 API 额度 |
 
-第二幕：办公室
-张总：李明，上次的方案客户很满意。
-李明：（惊喜）真的吗？太好了！
-张总：但是还有几个细节需要调整，今天能改完吗？
-李明：（叹气）好吧，我今天加班。
+### 台本管理
 
-第三幕：深夜
-小红：这么晚还在加班？
-李明：（疲惫）没办法，客户明天要看。
-小红：我给你带了夜宵，先吃点吧。
-李明：（感动）谢谢你，小红。
-```
-
-</details>
-
-#### 角色分析结果
-
-| 角色 | 性别 | 年龄 | 音色推荐 | 性格特征 |
-|------|------|------|----------|----------|
-| 服务员 | 未知 | 25 | 温和礼貌 | 专业、友好，展现职业化服务态度 |
-| 李明 | 男 | 30 | 沉稳 | 勤奋认真，面对加班感疲惫，但仍负责到底 |
-| 张总 | 男 | 45 | 成熟稳重 | 权威、注重细节和效率，下达任务直接果断 |
-| 小红 | 女 | 28 | 温柔亲切 | 体贴温暖，深夜送夜宵展现细腻关怀 |
-
-#### TTS 合成测试
-
-```python
-# MiMo TTS v2.5 调用示例
-resp = client.chat.completions.create(
-    model="mimo-v2.5-tts",
-    messages=[...],
-    audio={"format": "wav", "voice": "Chloe"}
-)
-# ✅ 成功生成 143KB WAV 音频
-```
-
-### 单元测试覆盖
-
-```
-79/79 passed (100%)
-├── test_file_parser.py ........... 19 passed
-├── test_role_analyzer.py ......... 14 passed
-├── test_emotion_tagger.py ........ 10 passed
-├── test_tts_service.py ........... 10 passed
-└── test_api.py .................. 26 passed
-```
+| 功能 | 描述 |
+|------|------|
+| 📋 **台本列表** | 我的台本页展示所有上传记录，按时间排序 |
+| 🔗 **TTS 关联** | 每条台本关联其 TTS 合成记录，点击 Chip 直接跳转结果页 |
+| 🗑️ **删除** | 删除台本同时清理 TXT + 音频 + 字幕 |
 
 ---
 
@@ -94,14 +74,15 @@ resp = client.chat.completions.create(
 - **框架**: FastAPI 0.115 + Uvicorn
 - **ORM**: SQLAlchemy 2.0 + SQLite
 - **AI**: MiMo (Xiaomi) API — OpenAI SDK 调用 `mimo-v2.5-pro` / `mimo-v2.5-tts`
-- **音频**: pydub (拼接) + pysrt (字幕)
-- **异步**: Celery + Redis (可选，MVP 使用 FastAPI BackgroundTasks)
+- **Prompt**: JSON Schema (`response_format` strict mode) 约束输出格式
+- **音频**: pydub (拼接/裁剪/静音裁剪) + pysrt (字幕)
+- **异步**: FastAPI BackgroundTasks
 
 ### 前端
 - **框架**: React 18 + Vite 5 + TypeScript 5.6
-- **UI**: MUI v5 + Tailwind CSS v3
+- **UI**: MUI v5 (支持暗色模式切换)
 - **状态管理**: Zustand v5
-- **数据获取**: TanStack React Query v5
+- **数据获取**: TanStack React Query v5 + Axios
 
 ---
 
@@ -115,7 +96,7 @@ cd scriptmind-helper/backend
 cp .env.example .env
 ```
 
-编辑 `.env`，填入你的 MiMo API Key（[获取地址](https://platform.xiaomimimo.com)）:
+编辑 `.env`，填入 MiMo API Key：
 
 ```env
 MIMO_API_KEY=sk-your-key-here
@@ -140,15 +121,7 @@ npm install
 npm run dev
 ```
 
-访问 http://localhost:3000，上传台本开始使用。
-
-### 4. Docker 部署
-
-```bash
-docker-compose up -d
-# 前端: http://localhost:3000
-# 后端: http://localhost:8000/docs
-```
+访问 http://localhost:3000，拖拽/选择 `.txt` 台本即可开始。
 
 ---
 
@@ -156,12 +129,23 @@ docker-compose up -d
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| `POST` | `/api/v1/upload/script` | 上传台本文件 (multipart/form-data) |
+| `POST` | `/api/v1/upload/script` | 上传台本文件 |
+| `PUT` | `/api/v1/upload/script/{id}/content` | 编辑台本原文 |
 | `GET` | `/api/v1/upload/script/{id}` | 获取台本信息 |
-| `POST` | `/api/v1/analysis/{id}/analyze` | 触发 AI 角色分析（异步） |
-| `GET` | `/api/v1/analysis/{id}` | 获取分析结果（角色+台词+情感） |
-| `POST` | `/api/v1/tts/{id}/synthesize` | 触发 TTS 语音合成（异步） |
+| `DELETE` | `/api/v1/upload/script/{id}` | 删除台本 |
+| `GET` | `/api/v1/upload/scripts` | 列出所有台本 |
+| `POST` | `/api/v1/analysis/{id}/analyze` | 触发 AI 分析 |
+| `GET` | `/api/v1/analysis/{id}` | 获取分析结果（含内容/角色/台词） |
+| `PUT` | `/api/v1/lines/{id}` | 编辑单行（角色/情绪） |
+| `POST` | `/api/v1/lines/batch` | 批量更新（by_ids / by_role） |
+| `PUT` | `/api/v1/roles/{id}` | 编辑角色属性 |
+| `POST` | `/api/v1/roles/scripts/{id}/roles` | 创建新角色 |
+| `GET` | `/api/v1/styles/{category}` | 获取风格选项（内置+自定义） |
+| `POST` | `/api/v1/styles/` | 添加自定义风格 |
+| `POST` | `/api/v1/tts/{id}/synthesize` | 触发 TTS 合成 |
+| `GET` | `/api/v1/tts/preview` | 音色试听（缓存 WAV） |
 | `GET` | `/api/v1/tts/tasks/{id}` | 查询 TTS 任务状态 |
+| `GET` | `/api/v1/tts/tasks/{id}/download` | 下载音频/字幕 |
 | `GET` | `/api/v1/config/status` | 检查 API Key 配置状态 |
 | `POST` | `/api/v1/config/` | 更新 API Key 配置 |
 | `GET` | `/health` | 健康检查 |
@@ -172,27 +156,61 @@ docker-compose up -d
 
 ```
 scriptmind-helper/
-├── backend/                 # FastAPI 后端
+├── backend/
 │   ├── app/
-│   │   ├── api/endpoints/   # REST API (upload/analysis/tts/config)
-│   │   ├── models/          # SQLAlchemy 模型 (Script/Role/Line/TTSTask)
+│   │   ├── api/endpoints/   # upload / analysis / lines / roles / styles / tts / config
+│   │   ├── models/          # Script / Role / Line / TTSTask / StylePreset
 │   │   ├── schemas/         # Pydantic V2 校验
-│   │   ├── services/        # 业务逻辑 (parser/analyzer/tagger/tts)
-│   │   └── tasks/           # Celery 异步任务
-│   ├── tests/               # 79 个单元+集成测试
-│   ├── data/uploads/        # 上传文件存储
-│   └── data/output/         # 音频/字幕输出
-├── frontend/                # React + Vite 前端
+│   │   └── services/        # file_parser / role_analyzer / emotion_tagger / tts_service
+│   ├── data/
+│   │   ├── uploads/         # 上传 TXT
+│   │   ├── output/          # WAV + SRT 输出
+│   │   ├── preview/         # 音色试听缓存
+│   │   └── tts_cache/       # TTS MD5 缓存
+│   └── tests/
+├── frontend/
 │   └── src/
-│       ├── pages/           # Home / Analysis / Result / Config
-│       ├── components/      # ScriptUploader / RoleCard / AudioPlayer
+│       ├── pages/           # Home / Analysis / Result / Config / MyScripts
+│       ├── components/      # LineRow / BatchActionBar / StyleSelector / RoleCard / CreateRoleDialog / AudioPlayer / ScriptUploader
+│       ├── constants/       # emotions.ts 风格常量
 │       ├── services/        # Axios API 封装
-│       ├── store/           # Zustand 状态管理
-│       └── types/           # TypeScript 类型定义
-├── docs/                    # 设计文档 (PRD/Architecture/Task Breakdown)
-├── docker-compose.yml       # Docker 编排
-└── .env.example             # 环境变量模板
+│       ├── store/           # Zustand
+│       └── types/
+├── docs/
+├── docker-compose.yml
+└── .env.example
 ```
+
+---
+
+## 🗺 开发路线
+
+### ✅ 已完成
+
+- **T01** 项目脚手架 (FastAPI + React + Docker)
+- **T02** 后端核心 API (上传 / 角色分析 / TTS)
+- **T03** 前端核心页面 (上传 / 分析 / 结果)
+- **T04** 分析页可编辑功能 (逐行编辑 / 批量操作 / 快速转移)
+- **T05** 风格标签体系 (预置 + 自定义 + 跨脚本复用)
+- **T06** AI Prompt JSON Schema 严格约束
+- **T07** TTS 优化 (音色试听 / 缓存 / 容错 / 逐行进度 / 间隙配置)
+- **T08** 暗色模式 + 上传自动分析 + 分析前编辑
+- **T09** 台本管理关联 TTS (我的台本页语音列)
+
+### 📋 待优化 (P2)
+
+| # | 优化点 | 说明 |
+|---|--------|------|
+| 1 | **音量归一化** | RMS 归一化统一响度，不同角色台词音量一致 |
+| 2 | **MP3 导出** | 支持 `export(format="mp3")`，需要安装 ffmpeg |
+| 3 | **批量下载** | 一键导出 WAV + SRT 压缩包 |
+| 4 | **分析前角色预设** | 允许手动补充角色名单，提高 AI 识别准确度 |
+| 5 | **多人协作** | 简单用户系统，共享台本 |
+| 6 | **多格式台本** | 支持 PDF / Markdown 台本解析 |
+| 7 | **TTS 语速控制** | 每句台词可配语速 (当前固定 1.0) |
+| 8 | **TTS 情绪语音** | 根据 emotion_tag 调整 MiMo prompt 语调参数 |
+| 9 | **背景音乐** | 允许上传 BGM，混音到最终音频 |
+| 10 | **音频波形可视化** | ResultPage 音频播放器加波形图 |
 
 ---
 
@@ -203,9 +221,7 @@ scriptmind-helper/
 | `MIMO_API_KEY` | (必填) | MiMo 平台 API Key |
 | `MIMO_API_BASE` | `https://api.xiaomimimo.com/v1` | MiMo API 端点 |
 | `MIMO_CHAT_MODEL` | `mimo-v2.5-pro` | 对话模型 |
-| `MIMO_TTS_MODEL` | `mimo-v2.5-tts` | TTS 模型 |
 | `SQLITE_DB` | `scriptmind.db` | 数据库文件路径 |
-| `REDIS_URL` | `redis://localhost:6379/0` | Redis 连接（Celery 模式） |
 | `MAX_FILE_SIZE` | `10485760` (10MB) | 上传文件大小限制 |
 
 ### 获取 MiMo API Key
@@ -218,28 +234,6 @@ scriptmind-helper/
 > MiMo API 使用 OpenAI 兼容格式，可直接用 `openai` Python SDK 调用。
 
 ---
-
-## 🗺 开发路线
-
-- [x] **T01** — 项目脚手架 (FastAPI + React + Docker)
-- [x] **T02** — 后端核心 API (文件上传 / 角色分析 / TTS)
-- [x] **T03** — 前端核心页面 (拖拽上传 / 角色卡片 / 音频播放)
-- [x] **T04** — 自动化测试 (79/79 通过)
-- [x] **T05** — Docker 部署 + 文档
-- [ ] **T06** — 后台任务迁移 Celery
-- [ ] **T07** — 多格式台本支持 (PDF/Word/Markdown)
-- [ ] **T08** — 用户系统 + 历史记录
-
----
-
-## 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request！
-
-```bash
-# 运行测试
-cd backend && python -m pytest tests/ -v --tb=short
-```
 
 ## 📄 许可证
 
