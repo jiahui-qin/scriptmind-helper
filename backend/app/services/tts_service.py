@@ -51,8 +51,13 @@ def synthesize_full_script(
     role_voice_map: Dict[int, str],
     output_dir: str,
     script_id: int,
+    line_gap_ms: int = 0,
 ) -> Dict[str, str]:
-    """Synthesize all lines, splice into one WAV + SRT."""
+    """Synthesize all lines, splice into one WAV + SRT.
+
+    line_gap_ms: configurable gap between lines (ms), default 0.
+    Each TTS segment is trimmed of leading/trailing silence before splicing.
+    """
     os.makedirs(output_dir, exist_ok=True)
     segments = []
     subtitles = []
@@ -69,6 +74,8 @@ def synthesize_full_script(
             audio_bytes = _call_mimo_tts(text, voice, speed)
             # MiMo returns 24kHz mono WAV
             seg = AudioSegment(audio_bytes, sample_width=2, frame_rate=24000, channels=1)
+            # Trim leading/trailing silence from each segment
+            seg = seg.strip_silence(silence_thresh=-50, silence_len=50, padding=20)
         except Exception as e:
             print(f"TTS failed line {ln.get('line_number')}: {e}")
             seg = AudioSegment.silent(duration=1000)
@@ -81,15 +88,15 @@ def synthesize_full_script(
             end=pysrt.SubRipTime(milliseconds=current_ms + dur_ms),
             text=text,
         ))
-        current_ms += dur_ms 
+        current_ms += dur_ms + line_gap_ms
 
     if not segments:
         raise ValueError("No audio segments generated")
 
     full = segments[0]
-    silence = AudioSegment.silent(duration=0)
+    gap = AudioSegment.silent(duration=line_gap_ms)
     for seg in segments[1:]:
-        full = full + silence + seg
+        full = full + gap + seg
 
     audio_path = os.path.join(output_dir, f"script_{script_id}_full.wav")
     srt_path = os.path.join(output_dir, f"script_{script_id}_full.srt")

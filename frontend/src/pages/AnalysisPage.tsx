@@ -3,7 +3,7 @@ import {
   Box, Typography, Paper, LinearProgress, Alert, Button, Checkbox, Stack, Grid,
   Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, Switch, FormControlLabel, Divider,
   FormControl, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, SelectChangeEvent,
+  TableHead, TableRow, SelectChangeEvent, Slider,
 } from '@mui/material';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -61,6 +61,7 @@ export default function AnalysisPage() {
   const [ttsLoading, setTtsLoading] = useState(false);
   const [includeNarration, setIncludeNarration] = useState(true);
   const [narrationVoice, setNarrationVoice] = useState("冰糖");
+  const [lineGapMs, setLineGapMs] = useState(0);
   const [ttsError, setTtsError] = useState('');
   const availableVoices = getVoices();
 
@@ -146,7 +147,7 @@ export default function AnalysisPage() {
       Object.entries(voiceMap).forEach(([roleId, voice]) => {
         if (voice) roleVoiceMap[Number(roleId)] = voice;
       });
-      const res = await triggerTTS(Number(scriptId), roleVoiceMap, includeNarration, narrationVoice);
+      const res = await triggerTTS(Number(scriptId), roleVoiceMap, includeNarration, narrationVoice, lineGapMs);
       const taskId = (res.data as any).task_id;
       setTtsDialogOpen(false);
       navigate(`/result/${taskId}`);
@@ -435,6 +436,24 @@ export default function AnalysisPage() {
               </Select>
             </FormControl>
           )}
+          <Divider sx={{ my: 1.5 }} />
+          <Typography variant="subtitle2" fontWeight={600} gutterBottom>句间间隙</Typography>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Slider
+              size="small"
+              value={lineGapMs}
+              min={0}
+              max={2000}
+              step={50}
+              onChange={(_e, val) => setLineGapMs(val as number)}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(v) => `${v}ms`}
+              sx={{ flex: 1 }}
+            />
+            <Typography variant="body2" color="text.secondary" sx={{ minWidth: 50 }}>
+              {lineGapMs}ms
+            </Typography>
+          </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2, pt: 0 }}>
           <Button onClick={() => setTtsDialogOpen(false)} disabled={ttsLoading}>

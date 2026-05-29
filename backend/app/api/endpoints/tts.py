@@ -15,7 +15,7 @@ logger = logging.getLogger("scriptmind.tts")
 router = APIRouter()
 
 
-def _run_tts(script_id: int, role_voice_map: Dict[int, str], include_narration: bool = True, narration_voice: str = "冰糖"):
+def _run_tts(script_id: int, role_voice_map: Dict[int, str], include_narration: bool = True, narration_voice: str = "冰糖", line_gap_ms: int = 0):
     db = SessionLocal()
     try:
         script = db.query(Script).filter(Script.id == script_id).first()
@@ -38,8 +38,8 @@ def _run_tts(script_id: int, role_voice_map: Dict[int, str], include_narration: 
         output_dir = os.path.join("data", "output")
         if not include_narration:
             lines_dict = [l for l in lines_dict if l["role_id"] is not None]
-        logger.info(f"[tts:{script_id}] Synthesizing {len(lines_dict)} lines (narration={include_narration}, voice={narration_voice})")
-        result = synthesize_full_script(lines_dict, actual_role_voice_map, output_dir, script_id)
+        logger.info(f"[tts:{script_id}] Synthesizing {len(lines_dict)} lines (narration={include_narration}, voice={narration_voice}, gap={line_gap_ms}ms)")
+        result = synthesize_full_script(lines_dict, actual_role_voice_map, output_dir, script_id, line_gap_ms)
         task = db.query(TTSTask).filter(TTSTask.script_id == script_id).order_by(TTSTask.id.desc()).first()
         if task:
             task.status = "completed"
@@ -69,11 +69,12 @@ async def trigger_tts(script_id: int, body: Dict[str, Any], background_tasks: Ba
     role_voice_map = body.get("role_voice_map", {})
     include_narration = body.get("include_narration", True)
     narration_voice = body.get("narration_voice", "冰糖")
+    line_gap_ms = body.get("line_gap_ms", 0)
     task = TTSTask(script_id=script_id, status="pending")
     db.add(task)
     db.commit()
     db.refresh(task)
-    background_tasks.add_task(_run_tts, script_id, role_voice_map, include_narration, narration_voice)
+    background_tasks.add_task(_run_tts, script_id, role_voice_map, include_narration, narration_voice, line_gap_ms)
     logger.info(f"[tts:{script_id}] Task {task.id} queued")
     return {"script_id": script_id, "task_id": task.id, "status": "pending"}
 
