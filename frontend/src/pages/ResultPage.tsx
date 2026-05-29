@@ -188,20 +188,26 @@ export default function ResultPage() {
 
           {/* 处理中的进度条 */}
           {status.status === 'processing' && (
-            <LinearProgress
-              variant="determinate"
-              value={status.progress || 0}
-              sx={{
-                height: 6,
-                borderRadius: 3,
-                mb: 2,
-                bgcolor: '#e2e8f0',
-                '& .MuiLinearProgress-bar': {
+            <>
+              <LinearProgress
+                variant="determinate"
+                value={status.progress || 0}
+                sx={{
+                  height: 6,
                   borderRadius: 3,
-                  background: 'linear-gradient(90deg, #6366f1, #a855f7)',
-                },
-              }}
-            />
+                  mb: 1.5,
+                  bgcolor: '#e2e8f0',
+                  '& .MuiLinearProgress-bar': {
+                    borderRadius: 3,
+                    background: 'linear-gradient(90deg, #6366f1, #a855f7)',
+                  },
+                }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                合成进度: {status.progress || 0}%
+                {status.total_lines ? ` (预估 ${status.total_lines} 行)` : ''}
+              </Typography>
+            </>
           )}
 
           {status.status === 'pending' && (
@@ -216,6 +222,13 @@ export default function ResultPage() {
             </Alert>
           )}
         </Paper>
+
+        {/* ── 失败行警告 ──────────────────────── */}
+        {status.status === 'completed' && status.failed_lines && status.failed_lines.length > 0 && (
+          <Alert severity="warning" sx={{ borderRadius: 2, mb: 3 }}>
+            以下行合成失败，已用静音替代：第 {status.failed_lines.join(', ')} 行
+          </Alert>
+        )}
 
         {/* ── 音频播放器 ──────────────────────── */}
         {status.status === 'completed' && status.audio_url && (

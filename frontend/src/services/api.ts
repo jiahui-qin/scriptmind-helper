@@ -57,12 +57,15 @@ export interface AnalysisResponse {
 }
 
 export interface TTSStatusResponse {
-  task_id: string;
+  task_id: number;
+  script_id: number;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   progress: number;
   audio_url: string | null;
   subtitle_url: string | null;
   error_message: string | null;
+  failed_lines: number[];
+  total_lines?: number;
 }
 
 export interface TTSVoice {

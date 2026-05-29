@@ -403,20 +403,32 @@ export default function AnalysisPage() {
                       </Stack>
                     </TableCell>
                     <TableCell>
-                      <FormControl fullWidth size="small">
-                        <Select
-                          value={voiceMap[role.id] || ''}
-                          onChange={handleDialogVoiceChange(role.id)}
-                          displayEmpty
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <FormControl fullWidth size="small">
+                          <Select
+                            value={voiceMap[role.id] || ''}
+                            onChange={handleDialogVoiceChange(role.id)}
+                            displayEmpty
+                          >
+                            <MenuItem value="">
+                              <Typography variant="body2" color="text.secondary">默认</Typography>
+                            </MenuItem>
+                            {availableVoices.map((v) => (
+                              <MenuItem key={v} value={v}>{v}</MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                        <Button
+                          size="small"
+                          sx={{ minWidth: 32, p: 0.5 }}
+                          onClick={() => {
+                            const audio = new Audio(`/api/v1/tts/preview?voice=${encodeURIComponent(voiceMap[role.id] || '冰糖')}`);
+                            audio.play().catch(() => {});
+                          }}
                         >
-                          <MenuItem value="">
-                            <Typography variant="body2" color="text.secondary">默认</Typography>
-                          </MenuItem>
-                          {availableVoices.map((v) => (
-                            <MenuItem key={v} value={v}>{v}</MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
+                          <span style={{ fontSize: 16 }}>&#9654;</span>
+                        </Button>
+                      </Stack>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -430,11 +442,23 @@ export default function AnalysisPage() {
             label="包含旁白"
           />
           {includeNarration && (
-            <FormControl fullWidth size="small" sx={{ mt: 0.5 }}>
-              <Select value={narrationVoice} onChange={(e) => setNarrationVoice(e.target.value)} displayEmpty>
-                {availableVoices.map((v) => (<MenuItem key={v} value={v}>{v}</MenuItem>))}
-              </Select>
-            </FormControl>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <FormControl fullWidth size="small" sx={{ mt: 0.5 }}>
+                <Select value={narrationVoice} onChange={(e) => setNarrationVoice(e.target.value)} displayEmpty>
+                  {availableVoices.map((v) => (<MenuItem key={v} value={v}>{v}</MenuItem>))}
+                </Select>
+              </FormControl>
+              <Button
+                size="small"
+                sx={{ minWidth: 32, p: 0.5 }}
+                onClick={() => {
+                  const audio = new Audio(`/api/v1/tts/preview?voice=${encodeURIComponent(narrationVoice)}`);
+                  audio.play().catch(() => {});
+                }}
+              >
+                <span style={{ fontSize: 16 }}>&#9654;</span>
+              </Button>
+            </Stack>
           )}
           <Divider sx={{ my: 1.5 }} />
           <Typography variant="subtitle2" fontWeight={600} gutterBottom>句间间隙</Typography>
