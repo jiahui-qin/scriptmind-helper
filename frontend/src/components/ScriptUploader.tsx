@@ -7,7 +7,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { uploadScript, type ScriptUploadResponse } from '../services/api';
+import { uploadScript, triggerAnalysis, type ScriptUploadResponse } from '../services/api';
 import { useStore } from '../store/useStore';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -21,10 +21,15 @@ export default function ScriptUploader() {
   const navigate = useNavigate();
 
   const mutation = useMutation({
-    mutationFn: (f: File) => uploadScript(f).then((r) => r.data),
+    mutationFn: async (f: File) => {
+      const uploadRes = await uploadScript(f);
+      const scriptId = uploadRes.data.id;
+      // Auto-trigger analysis after upload
+      await triggerAnalysis(scriptId);
+      return uploadRes.data;
+    },
     onSuccess: (data: ScriptUploadResponse) => {
       setScriptId(data.id);
-      // 自动跳转到分析页面
       navigate(`/analysis/${data.id}`);
     },
   });

@@ -10,7 +10,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DescriptionIcon from '@mui/icons-material/Description';
-import { listScripts, deleteScript, type ScriptUploadResponse } from '../services/api';
+import AudiotrackIcon from '@mui/icons-material/Audiotrack';
+import { listScripts, deleteScript, listTTSTasks, type ScriptUploadResponse } from '../services/api';
 
 /** 状态标签配置 */
 const STATUS_CONFIG: Record<string, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
@@ -41,6 +42,7 @@ export default function MyScriptsPage() {
   const [scripts, setScripts] = useState<ScriptUploadResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [ttsTasks, setTtsTasks] = useState<Record<number, { taskId: number; status: string }[]>>({});
 
   // Delete dialog
   const [deleteTarget, setDeleteTarget] = useState<ScriptUploadResponse | null>(null);
@@ -56,6 +58,16 @@ export default function MyScriptsPage() {
       // Sort by created_at descending
       data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setScripts(data);
+      // Fetch TTS tasks for completed scripts
+      try {
+        const ttsRes = await listTTSTasks();
+        const tasks: Record<number, { taskId: number; status: string }[]> = {};
+        (Array.isArray(ttsRes.data) ? ttsRes.data : []).forEach((t: any) => {
+          if (!tasks[t.script_id]) tasks[t.script_id] = [];
+          tasks[t.script_id].push({ taskId: t.task_id || t.id, status: t.status });
+        });
+        setTtsTasks(tasks);
+      } catch { /* ignore */ }
     } catch (e: any) {
       setError(e?.response?.data?.detail || e?.message || '加载台本列表失败');
     } finally {
@@ -169,6 +181,7 @@ export default function MyScriptsPage() {
                   <TableCell sx={{ fontWeight: 600 }}>文件名</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>上传时间</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>语音</TableCell>
                   <TableCell sx={{ fontWeight: 600, width: 140 }}>操作</TableCell>
                 </TableRow>
               </TableHead>
@@ -191,6 +204,25 @@ export default function MyScriptsPage() {
                     </TableCell>
                     <TableCell>
                       {getStatusChip(script.status)}
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const tasks = ttsTasks[script.id];
+                        if (!tasks || tasks.length === 0) return <Typography variant="caption" color="text.disabled">—</Typography>;
+                        return tasks.map((t) => (
+                          <Chip
+                            key={t.taskId}
+                            size="small"
+                            icon={<AudiotrackIcon />}
+                            label={t.status === 'completed' ? '可播放' : t.status}
+                            color={t.status === 'completed' ? 'success' : 'default'}
+                            variant="outlined"
+                            onClick={() => navigate(`/result/${t.taskId}`)}
+                            clickable
+                            sx={{ mr: 0.5 }}
+                          />
+                        ));
+                      })()}
                     </TableCell>
                     <TableCell>
                       <Stack direction="row" spacing={0.5}>

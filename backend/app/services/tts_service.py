@@ -107,9 +107,14 @@ def synthesize_full_script(
 
         try:
             audio_bytes = _call_mimo_tts(text, voice, speed)
-            seg = AudioSegment(audio_bytes, sample_width=sample_width,
-                               frame_rate=frame_rate, channels=channels)
-            seg = seg.strip_silence(silence_thresh=-50, silence_len=50, padding=20)
+            # Let pydub auto-detect format from WAV header
+            seg = AudioSegment.from_file(
+                __import__('io').BytesIO(audio_bytes), format="wav"
+            )
+            # Normalize to 24kHz mono 16-bit for consistent splicing
+            if seg.frame_rate != 24000 or seg.channels != 1 or seg.sample_width != 2:
+                seg = seg.set_frame_rate(24000).set_channels(1).set_sample_width(2)
+            seg = seg.strip_silence(silence_thresh=-40, silence_len=100, padding=30)
         except Exception as e:
             print(f"TTS failed line {line_no}: {e}")
             failed_lines.append(line_no)
