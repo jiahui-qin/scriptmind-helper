@@ -160,6 +160,7 @@ async def get_analysis(script_id: int, db: Session = Depends(get_db)):
         "status": script.status,
         "progress": script.progress,
         "error_message": script.error_message,
+        "content": script.content,
         "roles": [
             # 旁白作为系统虚拟角色始终存在（id=0）
             {

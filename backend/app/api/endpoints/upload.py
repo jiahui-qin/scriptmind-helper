@@ -156,8 +156,25 @@ async def delete_script(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Script not found"
         )
-    # Delete file from disk
     if os.path.exists(script.file_path):
         os.remove(script.file_path)
     db.delete(script)
     db.commit()
+
+
+@router.put("/script/{script_id}/content")
+async def update_script_content(script_id: int, body: dict, db: Session = Depends(get_db)):
+    """Update script content (for pre-analysis editing). Resets analysis state."""
+    script = db.query(Script).filter(Script.id == script_id).first()
+    if not script:
+        raise HTTPException(status_code=404, detail="Script not found")
+    new_content = body.get("content", "")
+    if not new_content:
+        raise HTTPException(status_code=400, detail="Content cannot be empty")
+    script.content = new_content
+    script.is_analyzed = False
+    script.status = "uploaded"
+    script.progress = 0
+    script.error_message = None
+    db.commit()
+    return {"id": script.id, "filename": script.filename, "message": "Content updated, analysis reset"}

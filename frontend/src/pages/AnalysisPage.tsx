@@ -3,7 +3,7 @@ import {
   Box, Typography, Paper, LinearProgress, Alert, Button, Checkbox, Stack, Grid,
   Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, Switch, FormControlLabel, Divider,
   FormControl, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, SelectChangeEvent, Slider,
+  TableHead, TableRow, SelectChangeEvent, Slider, TextField,
 } from '@mui/material';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -13,6 +13,7 @@ import {
   type Role, type Line,
 } from '../services/api';
 import { updateLine, batchUpdateLines } from '../services/api';
+import { updateScriptContent } from '../services/api';
 import { BASIC_EMOTIONS, COMPLEX_EMOTIONS } from '../constants/emotions';
 import RoleCard from '../components/RoleCard';
 import LineRow from '../components/LineRow';
@@ -63,6 +64,9 @@ export default function AnalysisPage() {
   const [narrationVoice, setNarrationVoice] = useState("冰糖");
   const [lineGapMs, setLineGapMs] = useState(0);
   const [ttsError, setTtsError] = useState('');
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editContent, setEditContent] = useState('');
+  const [scriptContent, setScriptContent] = useState('');
   const availableVoices = getVoices();
 
   // Initialize voice map from roles
@@ -84,6 +88,7 @@ export default function AnalysisPage() {
       setErrorMsg(data.error_message || '');
       if (data.roles?.length > 0) setRoles(data.roles);
       if (data.lines?.length > 0) setLines(data.lines);
+      if (data.content) setScriptContent(data.content);
       return data.status;
     } catch (e: any) {
       setErrorMsg(e.message);
@@ -257,12 +262,47 @@ export default function AnalysisPage() {
       {status === 'uploaded' && (
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>台本已上传，点击下方按钮开始 AI 分析</Typography>
-          <Button variant="contained" size="large" onClick={handleTrigger} disabled={isPolling}
-            startIcon={<AutoFixHighIcon />} sx={{ px: 4, py: 1.5, borderRadius: 2 }}>
-            {isPolling ? '分析中...' : '开始分析'}
-          </Button>
+          <Stack direction="row" spacing={2} justifyContent="center">
+            <Button variant="outlined" size="large" onClick={() => { setEditContent(scriptContent); setEditDialogOpen(true); }}
+              sx={{ px: 4, py: 1.5, borderRadius: 2 }}>
+              编辑原文
+            </Button>
+            <Button variant="contained" size="large" onClick={handleTrigger} disabled={isPolling}
+              startIcon={<AutoFixHighIcon />} sx={{ px: 4, py: 1.5, borderRadius: 2 }}>
+              {isPolling ? '分析中...' : '开始分析'}
+            </Button>
+          </Stack>
         </Box>
       )}
+
+      {/* ── 编辑原文 Dialog ──────────────────────── */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>编辑原文</DialogTitle>
+        <DialogContent>
+          <TextField
+            multiline fullWidth
+            minRows={12} maxRows={30}
+            value={editContent}
+            onChange={e => setEditContent(e.target.value)}
+            variant="outlined"
+            sx={{ fontFamily: 'monospace', fontSize: 14 }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button onClick={() => setEditDialogOpen(false)}>取消</Button>
+          <Button variant="contained" onClick={async () => {
+            if (!scriptId) return;
+            try {
+              await updateScriptContent(Number(scriptId), editContent);
+              setEditDialogOpen(false);
+              setErrorMsg('');
+              setStatus('uploaded');
+            } catch (e: any) {
+              setErrorMsg(e?.response?.data?.detail || '保存失败');
+            }
+          }}>保存原文</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* ── 角色列表 ────────────────────────────── */}
       {roles.length > 0 && (

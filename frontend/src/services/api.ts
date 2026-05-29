@@ -143,6 +143,9 @@ export default api;
 export const deleteScript = (scriptId: number) =>
   api.delete(`/upload/script/${scriptId}`);
 
+export const updateScriptContent = (scriptId: number, content: string) =>
+  api.put(`/upload/script/${scriptId}/content`, { content });
+
 // --- Roles ---
 export const updateRole = (roleId: number, data: Record<string, any>) =>
   api.put(`/roles/${roleId}`, data)

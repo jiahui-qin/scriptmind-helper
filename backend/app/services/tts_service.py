@@ -3,43 +3,48 @@
 Ref: https://platform.xiaomimimo.com/docs/zh-CN/usage-guide/speech-synthesis-v2.5
 """
 import os
+import hashlib
 import base64
-from typing import List, Dict, Tuple
+from typing import List, Dict
 from openai import OpenAI
 from pydub import AudioSegment
 import pysrt
 from app.config import settings
 
-# Supported MiMo TTS voices
 MIMO_VOICES = ["mimo_default", "冰糖", "茉莉", "苏打", "白桦", "Mia", "Chloe", "Milo", "Dean"]
-
-# Preview text for voice sampling
 PREVIEW_TEXT = "你好，这是一段语音试听，感谢使用台本分析助手。"
 
+os.makedirs("data/preview", exist_ok=True)
+os.makedirs("data/tts_cache", exist_ok=True)
 
-def _get_preview_cache_path(voice: str) -> str:
-    """Return cache path for a voice preview file."""
-    os.makedirs("data/preview", exist_ok=True)
-    return os.path.join("data/preview", f"{voice}.wav")
+
+def _cache_path(text: str, voice: str) -> str:
+    h = hashlib.md5(f"{voice}:{text}".encode()).hexdigest()
+    return os.path.join("data", "tts_cache", f"{h}.wav")
 
 
 def preview_voice(voice: str) -> bytes:
-    """Generate (or retrieve cached) a short voice preview as WAV bytes."""
-    cache_path = _get_preview_cache_path(voice)
-    if os.path.exists(cache_path):
-        with open(cache_path, "rb") as f:
+    p = os.path.join("data/preview", f"{voice}.wav")
+    if os.path.exists(p):
+        with open(p, "rb") as f:
             return f.read()
-
-    wav_bytes = _call_mimo_tts(PREVIEW_TEXT, voice)
-    with open(cache_path, "wb") as f:
-        f.write(wav_bytes)
-    return wav_bytes
+    wav = _call_mimo_tts(PREVIEW_TEXT, voice)
+    with open(p, "wb") as f:
+        f.write(wav)
+    return wav
 
 
 def _call_mimo_tts(text: str, voice: str = "冰糖", speed: float = 1.0) -> bytes:
-    """Call MiMo TTS v2.5, return WAV bytes (base64 decoded)."""
+    """Call MiMo TTS v2.5, return WAV bytes (base64 decoded). Caches at default speed."""
     if not settings.MIMO_API_KEY or not settings.MIMO_API_KEY.startswith("sk-"):
         raise ValueError("MIMO_API_KEY not configured")
+
+    # Cache hit: same text + voice at default speed
+    if speed == 1.0:
+        cp = _cache_path(text, voice)
+        if os.path.exists(cp):
+            with open(cp, "rb") as f:
+                return f.read()
 
     if speed < 0.8:
         tone = "very slow and calm pace"
@@ -59,8 +64,12 @@ def _call_mimo_tts(text: str, voice: str = "冰糖", speed: float = 1.0) -> byte
         ],
         audio={"format": "wav", "voice": voice},
     )
-    audio_data = resp.choices[0].message.audio.data
-    return base64.b64decode(audio_data)
+    wav = base64.b64decode(resp.choices[0].message.audio.data)
+
+    if speed == 1.0:
+        with open(_cache_path(text, voice), "wb") as f:
+            f.write(wav)
+    return wav
 
 
 def synthesize_full_script(
@@ -71,18 +80,10 @@ def synthesize_full_script(
     line_gap_ms: int = 0,
     progress_callback=None,
 ) -> Dict:
-    """Synthesize all lines, splice into one WAV + SRT.
-
-    Args:
-        progress_callback: optional async callable(generated_count, total_count, failed_lines)
-
-    Returns:
-        {"audio_path": ..., "srt_path": ..., "failed_lines": [...]}
-    """
     os.makedirs(output_dir, exist_ok=True)
-    segments: List[AudioSegment] = []
-    subtitles: List[pysrt.SubRipItem] = []
-    failed_lines: List[int] = []
+    segments = []
+    subtitles = []
+    failed_lines = []
     current_ms = 0
     total = len(lines)
 
@@ -92,10 +93,8 @@ def synthesize_full_script(
         speed = ln.get("speech_rate", 1.0)
         text = str(ln.get("content", "")).strip()
         line_no = ln.get("line_number", i + 1)
-
         if not text:
             continue
-
         try:
             audio_bytes = _call_mimo_tts(text, voice, speed)
             seg = AudioSegment(audio_bytes, sample_width=2, frame_rate=24000, channels=1)
@@ -104,7 +103,6 @@ def synthesize_full_script(
             print(f"TTS failed line {line_no}: {e}")
             failed_lines.append(line_no)
             seg = AudioSegment.silent(duration=1000)
-
         segments.append(seg)
         dur_ms = len(seg)
         subtitles.append(pysrt.SubRipItem(
@@ -114,8 +112,6 @@ def synthesize_full_script(
             text=text,
         ))
         current_ms += dur_ms + line_gap_ms
-
-        # Report progress
         if progress_callback:
             progress_callback(i + 1, total, failed_lines)
 
