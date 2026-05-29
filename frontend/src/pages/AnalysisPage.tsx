@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Box, Typography, Paper, LinearProgress, Alert, Button, Chip, Stack, Grid,
-  Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem,
+  Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, Switch, FormControlLabel, Divider,
   FormControl, InputLabel, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, SelectChangeEvent,
 } from '@mui/material';
@@ -47,6 +47,8 @@ export default function AnalysisPage() {
   // TTS synthesize dialog
   const [ttsDialogOpen, setTtsDialogOpen] = useState(false);
   const [ttsLoading, setTtsLoading] = useState(false);
+  const [includeNarration, setIncludeNarration] = useState(true);
+  const [narrationVoice, setNarrationVoice] = useState("冰糖");
   const [ttsError, setTtsError] = useState('');
   const availableVoices = getVoices();
 
@@ -132,7 +134,7 @@ export default function AnalysisPage() {
       Object.entries(voiceMap).forEach(([roleId, voice]) => {
         if (voice) roleVoiceMap[Number(roleId)] = voice;
       });
-      const res = await triggerTTS(Number(scriptId), roleVoiceMap);
+      const res = await triggerTTS(Number(scriptId), roleVoiceMap, includeNarration, narrationVoice);
       const taskId = (res.data as any).task_id;
       setTtsDialogOpen(false);
       navigate(`/result/${taskId}`);
@@ -306,6 +308,19 @@ export default function AnalysisPage() {
               </TableBody>
             </Table>
           </TableContainer>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="subtitle2" fontWeight={600} gutterBottom>旁白设置</Typography>
+          <FormControlLabel
+            control={<Switch checked={includeNarration} onChange={(e) => setIncludeNarration(e.target.checked)} size="small" />}
+            label="包含旁白"
+          />
+          {includeNarration && (
+            <FormControl fullWidth size="small" sx={{ mt: 0.5 }}>
+              <Select value={narrationVoice} onChange={(e) => setNarrationVoice(e.target.value)} displayEmpty>
+                {availableVoices.map((v) => (<MenuItem key={v} value={v}>{v}</MenuItem>))}
+              </Select>
+            </FormControl>
+          )}
         </DialogContent>
         <DialogActions sx={{ p: 2, pt: 0 }}>
           <Button onClick={() => setTtsDialogOpen(false)} disabled={ttsLoading}>

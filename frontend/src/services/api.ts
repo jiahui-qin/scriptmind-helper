@@ -105,10 +105,10 @@ export const getAnalysisResult = (scriptId: number) =>
 
 // ── TTS ────────────────────────────────────────────────────────
 
-export const triggerTTS = (scriptId: number, roleVoiceMap?: Record<number, string>) =>
-  api.post<{ script_id: number; task_id: string; status: string; message: string }>(
+export const triggerTTS = (scriptId: number, roleVoiceMap?: Record<number, string>, includeNarration = true, narrationVoice = "冰糖") =>
+  api.post<{ script_id: number; task_id: number; status: string }>(
     `/tts/${scriptId}/synthesize`,
-    roleVoiceMap ? { role_voice_map: roleVoiceMap } : {}
+    { role_voice_map: roleVoiceMap || {}, include_narration: includeNarration, narration_voice: narrationVoice }
   );
 
 export const getTTSResult = (taskId: string) =>

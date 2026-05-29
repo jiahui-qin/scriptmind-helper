@@ -14,7 +14,7 @@ from app.config import settings
 MIMO_VOICES = ["mimo_default", "冰糖", "茉莉", "苏打", "白桦", "Mia", "Chloe", "Milo", "Dean"]
 
 
-def _call_mimo_tts(text: str, voice: str = "Chloe", speed: float = 1.0) -> bytes:
+def _call_mimo_tts(text: str, voice: str = "冰糖", speed: float = 1.0) -> bytes:
     """Call MiMo TTS v2.5, return WAV bytes (base64 decoded).
 
     Uses the speech-synthesis-v2.5 format: messages with user/assistant roles,
@@ -60,7 +60,7 @@ def synthesize_full_script(
 
     for ln in lines:
         role_id = ln.get("role_id")
-        voice = role_voice_map.get(role_id, "Chloe")
+        voice = role_voice_map.get(role_id, "冰糖")
         speed = ln.get("speech_rate", 1.0)
         text = str(ln.get("content", "")).strip()
         if not text:
@@ -81,13 +81,13 @@ def synthesize_full_script(
             end=pysrt.SubRipTime(milliseconds=current_ms + dur_ms),
             text=text,
         ))
-        current_ms += dur_ms + 300
+        current_ms += dur_ms 
 
     if not segments:
         raise ValueError("No audio segments generated")
 
     full = segments[0]
-    silence = AudioSegment.silent(duration=300)
+    silence = AudioSegment.silent(duration=0)
     for seg in segments[1:]:
         full = full + silence + seg
 

@@ -15,7 +15,7 @@ logger = logging.getLogger("scriptmind.tts")
 router = APIRouter()
 
 
-def _run_tts(script_id: int, role_voice_map: Dict[int, str]):
+def _run_tts(script_id: int, role_voice_map: Dict[int, str], include_narration: bool = True, narration_voice: str = "冰糖"):
     db = SessionLocal()
     try:
         script = db.query(Script).filter(Script.id == script_id).first()
@@ -23,6 +23,9 @@ def _run_tts(script_id: int, role_voice_map: Dict[int, str]):
             return
         from app.models.line import Line
         lines = db.query(Line).filter(Line.script_id == script_id).order_by(Line.line_number).all()
+        # Build full voice map: role voices + narration voice (for role_id=None lines)
+        actual_role_voice_map = {int(k): v for k, v in role_voice_map.items()}
+        actual_role_voice_map[0] = narration_voice  # 0 used as key for narration
         lines_dict = [
             {
                 "id": l.id, "line_number": l.line_number, "content": l.content,
@@ -31,9 +34,11 @@ def _run_tts(script_id: int, role_voice_map: Dict[int, str]):
             }
             for l in lines
         ]
-        actual_role_voice_map = {int(k): v for k, v in role_voice_map.items()}
+        # Filter out narration if not included
+        if not include_narration:
         output_dir = os.path.join("data", "output")
-        logger.info(f"[tts:{script_id}] Synthesizing {len(lines_dict)} lines with {len(actual_role_voice_map)} voices")
+            lines_dict = [l for l in lines_dict if l["role_id"] is not None]
+        logger.info(f"[tts:{script_id}] Synthesizing {len(lines_dict)} lines (narration={include_narration}, voice={narration_voice})")
         result = synthesize_full_script(lines_dict, actual_role_voice_map, output_dir, script_id)
         task = db.query(TTSTask).filter(TTSTask.script_id == script_id).order_by(TTSTask.id.desc()).first()
         if task:
@@ -62,11 +67,13 @@ async def trigger_tts(script_id: int, body: Dict[str, Any], background_tasks: Ba
     if not script.is_analyzed:
         raise HTTPException(status_code=400, detail="请先完成角色分析后再生成语音")
     role_voice_map = body.get("role_voice_map", {})
+    include_narration = body.get("include_narration", True)
+    narration_voice = body.get("narration_voice", "冰糖")
     task = TTSTask(script_id=script_id, status="pending")
     db.add(task)
     db.commit()
     db.refresh(task)
-    background_tasks.add_task(_run_tts, script_id, role_voice_map)
+    background_tasks.add_task(_run_tts, script_id, role_voice_map, include_narration, narration_voice)
     logger.info(f"[tts:{script_id}] Task {task.id} queued")
     return {"script_id": script_id, "task_id": task.id, "status": "pending"}
 
@@ -85,7 +92,6 @@ async def get_tts_status(task_id: int, db: Session = Depends(get_db)):
 
 @router.get("/tasks/{task_id}/download")
 async def download_tts_file(task_id: int, type: str = "audio", db: Session = Depends(get_db)):
-    """Download generated audio or SRT file."""
     from fastapi.responses import FileResponse
     task = db.query(TTSTask).filter(TTSTask.id == task_id).first()
     if not task:
