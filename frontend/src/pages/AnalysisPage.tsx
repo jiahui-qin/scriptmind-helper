@@ -62,7 +62,7 @@ export default function AnalysisPage() {
   const [ttsLoading, setTtsLoading] = useState(false);
   const [includeNarration, setIncludeNarration] = useState(true);
   const [narrationVoice, setNarrationVoice] = useState("冰糖");
-  const [lineGapMs, setLineGapMs] = useState(0);
+  const [lineGapMs, setLineGapMs] = useState(300);
   const [ttsError, setTtsError] = useState('');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editContent, setEditContent] = useState('');
@@ -501,7 +501,7 @@ export default function AnalysisPage() {
             </Stack>
           )}
           <Divider sx={{ my: 1.5 }} />
-          <Typography variant="subtitle2" fontWeight={600} gutterBottom>句间间隙</Typography>
+          <Typography variant="subtitle2" fontWeight={600} gutterBottom>句间间隙 <Typography component="span" variant="caption" color="text.secondary">(推荐 200-400ms)</Typography></Typography>
           <Stack direction="row" spacing={2} alignItems="center">
             <Slider
               size="small"

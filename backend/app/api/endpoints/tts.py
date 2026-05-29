@@ -80,6 +80,13 @@ def _run_tts(script_id: int, role_voice_map: Dict[int, str], include_narration: 
                     tsk.progress = 100
                     tsk.audio_url = result["audio_path"]
                     tsk.subtitle_url = result["srt_path"]
+                    tsk.voice_config = json.dumps({
+                        "voice_map": {str(k): v for k, v in actual_role_voice_map.items()},
+                        "line_gap_ms": line_gap_ms,
+                        "include_narration": include_narration,
+                        "total_lines": total,
+                        "failed_lines": failed_lines,
+                    })
                     if failed_lines:
                         tsk.error_message = json.dumps({"failed_lines": failed_lines})
                     dbu.commit()
@@ -163,6 +170,7 @@ async def get_tts_status(task_id: int, db: Session = Depends(get_db)):
         "status": task.status, "progress": task.progress or 0,
         "audio_url": task.audio_url,
         "subtitle_url": task.subtitle_url,
+        "voice_config": json.loads(task.voice_config) if task.voice_config else None,
         "error_message": task.error_message if not failed_info else None,
         "failed_lines": failed_info.get("failed_lines", []) if failed_info else [],
     }

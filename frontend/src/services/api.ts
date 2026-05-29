@@ -64,6 +64,7 @@ export interface TTSStatusResponse {
   audio_url: string | null;
   subtitle_url: string | null;
   error_message: string | null;
+  voice_config: Record<string, any> | null;
   failed_lines: number[];
   total_lines?: number;
 }

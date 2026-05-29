@@ -230,6 +230,31 @@ export default function ResultPage() {
           </Alert>
         )}
 
+        {/* ── 合成参数 ──────────────────────── */}
+        {status.status === 'completed' && status.voice_config && (
+          <Paper elevation={0} sx={{ p: 2, mb: 3, border: '1px solid #e2e8f0', borderRadius: 2 }}>
+            <Typography variant="subtitle2" fontWeight={600} gutterBottom>合成参数</Typography>
+            <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap>
+              <Typography variant="body2" color="text.secondary">
+                句间间隙: <strong>{status.voice_config.line_gap_ms ?? 300}ms</strong>
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                总行数: <strong>{status.voice_config.total_lines ?? '-'} 行</strong>
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                旁白: <strong>{status.voice_config.include_narration ? '包含' : '跳过'}</strong>
+              </Typography>
+            </Stack>
+            {status.voice_config.voice_map && (
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
+                {Object.entries(status.voice_config.voice_map as Record<string, string>).map(([rid, v]) => (
+                  <Chip key={rid} size="small" label={`角色${rid}: ${v}`} variant="outlined" />
+                ))}
+              </Stack>
+            )}
+          </Paper>
+        )}
+
         {/* ── 音频播放器 ──────────────────────── */}
         {status.status === 'completed' && status.audio_url && (
           <Box sx={{ mb: 4 }}>
