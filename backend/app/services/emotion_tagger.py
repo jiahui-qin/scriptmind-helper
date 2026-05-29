@@ -39,10 +39,16 @@ def tag_emotions(
 
 情感标签可选：{", ".join(EMOTION_TAGS)}
 
-为每句台词标注：line_number(整数), emotion_tag(情感标签), tone(语气如平静/激动/温和/严厉), speech_rate(语速0.5-2.0), emotion_intensity(强度0.0-1.0)。
+为每句台词标注：
+- line_number(整数)
+- emotion_tag(情感标签)
+- tone(语气如平静/激动/温和/严厉)
+- speech_rate(语速0.5-2.0)
+- emotion_intensity(强度0.0-1.0)
+- complex_emotion: 复合情绪（可选：怅然/欣慰/无奈/愧疚/释然/嫉妒/厌倦/忐忑/动情，或其他复合情绪，或null）
 
 只输出 JSON：
-{{"tags": [{{"line_number": 1, "emotion_tag": "中性", "tone": "平静", "speech_rate": 1.0, "emotion_intensity": 0.5}}]}}"""
+{{"tags": [{{"line_number": 1, "emotion_tag": "中性", "tone": "平静", "speech_rate": 1.0, "emotion_intensity": 0.5, "complex_emotion": null}}]}}"""
 
     client = _get_client()
     resp = client.chat.completions.create(
@@ -51,7 +57,36 @@ def tag_emotions(
             {"role": "system", "content": EMOTION_SYSTEM},
             {"role": "user", "content": user_prompt},
         ],
-        response_format={"type": "json_object"},
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "emotion_tagging",
+                "strict": True,
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "tags": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "line_number": {"type": "integer", "minimum": 1},
+                                    "emotion_tag": {"type": "string", "enum": ["开心", "悲伤", "愤怒", "惊讶", "中性", "恐惧", "厌恶", "感动", "疲惫", "严肃", "兴奋", "委屈", "平静", "冷漠"]},
+                                    "tone": {"type": "string", "description": "语气"},
+                                    "speech_rate": {"type": "number", "minimum": 0.5, "maximum": 2.0},
+                                    "emotion_intensity": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                                    "complex_emotion": {"anyOf": [{"type": "string", "enum": ["怅然", "欣慰", "无奈", "愧疚", "释然", "嫉妒", "厌倦", "忐忑", "动情"]}, {"type": "null"}]},
+                                },
+                                "required": ["line_number", "emotion_tag", "tone", "speech_rate", "emotion_intensity"],
+                                "additionalProperties": False,
+                            },
+                        },
+                    },
+                    "required": ["tags"],
+                    "additionalProperties": False,
+                },
+            },
+        },
         temperature=0.3,
         max_completion_tokens=4096,
     )

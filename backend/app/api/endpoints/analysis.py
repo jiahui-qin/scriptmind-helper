@@ -66,6 +66,12 @@ def _run_analysis(script_id: int):
                 voice_type=r.get("voice_type", ""),
                 personality=r.get("personality", ""),
                 description=r.get("description", ""),
+                tone_style=r.get("tone_style"),
+                voice_color=r.get("voice_color"),
+                persona_accent=r.get("persona_accent"),
+                dialect=r.get("dialect"),
+                roleplay=r.get("roleplay"),
+                singing=r.get("singing"),
             )
             db.add(db_role)
             db.flush()
@@ -112,6 +118,7 @@ def _run_analysis(script_id: int):
             if line:
                 line.emotion_tag = t.get("emotion_tag", "中性")
                 line.emotion_intensity = t.get("emotion_intensity", 0.5)
+                line.complex_emotion = t.get("complex_emotion")
         _update_progress(db, script_id, "completed", 100)
         script.is_analyzed = True
         db.commit()
@@ -157,6 +164,12 @@ async def get_analysis(script_id: int, db: Session = Depends(get_db)):
             {
                 "id": r.id, "name": r.name, "gender": r.gender,
                 "age": r.age, "voice_type": r.voice_type, "personality": r.personality,
+                "tone_style": r.tone_style,
+                "voice_color": r.voice_color,
+                "persona_accent": r.persona_accent,
+                "dialect": r.dialect,
+                "roleplay": r.roleplay,
+                "singing": r.singing,
             }
             for r in roles
         ],
@@ -164,6 +177,7 @@ async def get_analysis(script_id: int, db: Session = Depends(get_db)):
             {
                 "id": l.id, "line_number": l.line_number, "content": l.content,
                 "role_id": l.role_id, "emotion_tag": l.emotion_tag,
+                "complex_emotion": l.complex_emotion,
             }
             for l in lines
         ],

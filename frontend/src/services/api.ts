@@ -27,6 +27,12 @@ export interface Role {
   personality: string;
   description: string;
   line_count?: number;
+  tone_style?: string;
+  voice_color?: string;
+  persona_accent?: string;
+  dialect?: string;
+  roleplay?: string;
+  singing?: string;
 }
 
 export interface Line {
@@ -37,6 +43,7 @@ export interface Line {
   content: string;
   emotion_tag: string | null;
   emotion_intensity: number | null;
+  complex_emotion?: string;
   order_index?: number;
 }
 
@@ -140,3 +147,33 @@ export const updateRole = (roleId: number, data: Record<string, any>) =>
 export const getVoices = () => [
   "mimo_default", "冰糖", "茉莉", "苏打", "白桦", "Mia", "Chloe", "Milo", "Dean",
 ]
+
+// ── Lines ──────────────────────────────────────────────────────
+
+export const updateLine = (lineId: number, data: {
+  role_id?: number | null; emotion_tag?: string; complex_emotion?: string; emotion_intensity?: number
+}) => api.put(`/lines/${lineId}`, data);
+
+export const batchUpdateLines = (data: {
+  mode: 'by_ids' | 'by_role';
+  line_ids?: number[];
+  script_id?: number;
+  from_role_id?: number | null;
+  updates: { role_id?: number | null; emotion_tag?: string; complex_emotion?: string }
+}) => api.post('/lines/batch', data);
+
+// ── Roles ──────────────────────────────────────────────────────
+
+export const createRole = (scriptId: number, data: {
+  name: string; gender?: string; age?: number; personality?: string;
+  tone_style?: string; voice_color?: string; persona_accent?: string;
+  dialect?: string; roleplay?: string; singing?: string;
+}) => api.post(`/scripts/${scriptId}/roles`, data);
+
+// ── Styles ─────────────────────────────────────────────────────
+
+export const getStyles = (category: string) =>
+  api.get<{ category: string; builtin: string[]; custom: string[]; all: string[] }>(`/styles/${category}`);
+
+export const addStyle = (category: string, value: string) =>
+  api.post(`/styles/?category=${encodeURIComponent(category)}&value=${encodeURIComponent(value)}`);

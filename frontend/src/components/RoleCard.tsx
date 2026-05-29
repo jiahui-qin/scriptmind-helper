@@ -11,6 +11,8 @@ import FemaleIcon from '@mui/icons-material/Female';
 import PersonIcon from '@mui/icons-material/Person';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import { type Role, getVoices, updateRole } from '../services/api';
+import StyleSelector from './StyleSelector';
+import { TONE_STYLES, VOICE_COLORS, PERSONA_ACCENTS, DIALECTS, ROLEPLAYS, SINGING_STYLES } from '../constants/emotions';
 
 interface RoleCardProps {
   role: Role;
@@ -285,6 +287,25 @@ export default function RoleCard({
                 />
               </Box>
             )}
+
+            {/* ── 人物风格属性（可编辑）─── */}
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" color="text.secondary" gutterBottom>人物风格属性</Typography>
+              <Stack spacing={1}>
+                <StyleSelector label="整体语调" value={role.tone_style || ''} options={TONE_STYLES}
+                  onChange={(val) => { updateRole(role.id, { tone_style: val }); }} />
+                <StyleSelector label="音色定位" value={role.voice_color || ''} options={VOICE_COLORS}
+                  onChange={(val) => { updateRole(role.id, { voice_color: val }); }} />
+                <StyleSelector label="人设腔调" value={role.persona_accent || ''} options={PERSONA_ACCENTS}
+                  onChange={(val) => { updateRole(role.id, { persona_accent: val }); }} />
+                <StyleSelector label="方言" value={role.dialect || ''} options={DIALECTS}
+                  onChange={(val) => { updateRole(role.id, { dialect: val }); }} />
+                <StyleSelector label="角色扮演" value={role.roleplay || ''} options={ROLEPLAYS}
+                  onChange={(val) => { updateRole(role.id, { roleplay: val }); }} />
+                <StyleSelector label="唱歌" value={role.singing || ''} options={SINGING_STYLES}
+                  onChange={(val) => { updateRole(role.id, { singing: val }); }} />
+              </Stack>
+            </Box>
           </Box>
         </Collapse>
       </CardContent>

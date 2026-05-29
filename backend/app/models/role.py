@@ -18,6 +18,12 @@ class Role(Base):
     voice_type = Column(String(100), nullable=True, comment="Voice type")
     personality = Column(Text, nullable=True, comment="Personality traits")
     description = Column(Text, nullable=True, comment="Character description")
+    tone_style = Column(String(50), nullable=True, comment="整体语调")
+    voice_color = Column(String(50), nullable=True, comment="音色定位")
+    persona_accent = Column(String(50), nullable=True, comment="人设腔调")
+    dialect = Column(String(50), nullable=True, comment="方言")
+    roleplay = Column(String(50), nullable=True, comment="角色扮演")
+    singing = Column(String(50), nullable=True, comment="唱歌风格")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

@@ -17,6 +17,7 @@ class Line(Base):
     content = Column(Text, nullable=False, comment="Line content/text")
     emotion_tag = Column(String(50), nullable=True, comment="Emotion tag")
     emotion_intensity = Column(Float, nullable=True, comment="Emotion intensity 0-1")
+    complex_emotion = Column(String(50), nullable=True, comment="复合情绪")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

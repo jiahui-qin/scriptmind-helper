@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
-  Box, Typography, Paper, LinearProgress, Alert, Button, Chip, Stack, Grid,
+  Box, Typography, Paper, LinearProgress, Alert, Button, Checkbox, Stack, Grid,
   Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, Switch, FormControlLabel, Divider,
-  FormControl, InputLabel, Table, TableBody, TableCell, TableContainer,
+  FormControl, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, SelectChangeEvent,
 } from '@mui/material';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
@@ -12,7 +12,12 @@ import {
   getAnalysisResult, triggerAnalysis, triggerTTS, getVoices,
   type Role, type Line,
 } from '../services/api';
+import { updateLine, batchUpdateLines } from '../services/api';
+import { BASIC_EMOTIONS, COMPLEX_EMOTIONS } from '../constants/emotions';
 import RoleCard from '../components/RoleCard';
+import LineRow from '../components/LineRow';
+import BatchActionBar from '../components/BatchActionBar';
+import CreateRoleDialog from '../components/CreateRoleDialog';
 
 const STATUS_LABELS: Record<string, string> = {
   uploaded: '等待分析',
@@ -40,6 +45,13 @@ export default function AnalysisPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [isPolling, setIsPolling] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ── 新增 state：选行 / 筛选 / 风格选项 ──
+  const [selectedLines, setSelectedLines] = useState<Set<number>>(new Set());
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [createRoleOpen, setCreateRoleOpen] = useState(false);
+  const [emotionOptions] = useState<string[]>(BASIC_EMOTIONS);
+  const [complexEmotionOptions] = useState<string[]>(COMPLEX_EMOTIONS);
 
   // Voice mapping state: roleId -> voice
   const [voiceMap, setVoiceMap] = useState<Record<number, string>>({});
@@ -145,6 +157,76 @@ export default function AnalysisPage() {
     }
   };
 
+  // ── 选行 / 筛选 / 行操作回调 ─────────────────
+
+  /** 切换单行选中 */
+  const toggleSelectLine = (lineId: number) => {
+    setSelectedLines(prev => {
+      const next = new Set(prev);
+      if (next.has(lineId)) next.delete(lineId); else next.add(lineId);
+      return next;
+    });
+  };
+
+  /** 计算当前筛选后的行 */
+  const filteredLines = roleFilter === 'all'
+    ? lines
+    : lines.filter(l =>
+        roleFilter === 'narration' ? l.role_id === null : l.role_id === Number(roleFilter)
+      );
+
+  /** 全选 / 取消全选 */
+  const toggleSelectAll = () => {
+    if (selectedLines.size === filteredLines.length && filteredLines.length > 0) {
+      setSelectedLines(new Set());
+    } else {
+      setSelectedLines(new Set(filteredLines.map(l => l.id)));
+    }
+  };
+
+  /** 单行更新 */
+  const handleUpdateLine = async (lineId: number, updates: Record<string, any>) => {
+    try {
+      await updateLine(lineId, updates);
+      setLines(prev => prev.map(l => l.id === lineId ? { ...l, ...updates } : l));
+    } catch (e) { /* ignore */ }
+  };
+
+  /** 批量更新 */
+  const handleBatchUpdate = async (updates: Record<string, any>) => {
+    try {
+      await batchUpdateLines({
+        mode: 'by_ids',
+        line_ids: Array.from(selectedLines),
+        updates,
+      } as any);
+      setLines(prev => prev.map(l =>
+        selectedLines.has(l.id) ? { ...l, ...updates } : l
+      ));
+      setSelectedLines(new Set());
+    } catch (e) { /* ignore */ }
+  };
+
+  /** 快速转移 */
+  const handleQuickTransfer = async (fromRoleId: number | null, toRoleId: number | null) => {
+    if (!scriptId) return;
+    try {
+      await batchUpdateLines({
+        mode: 'by_role',
+        script_id: Number(scriptId),
+        from_role_id: fromRoleId,
+        updates: { role_id: toRoleId },
+      } as any);
+      fetchResult();
+      setSelectedLines(new Set());
+    } catch (e) { /* ignore */ }
+  };
+
+  /** 创建角色后回调 */
+  const handleRoleCreated = (role: Role) => {
+    setRoles(prev => [...prev, role]);
+  };
+
   const isRunning = status !== 'completed' && status !== 'failed';
 
   return (
@@ -203,22 +285,55 @@ export default function AnalysisPage() {
       {/* ── 台词列表 ────────────────────────────── */}
       {lines.length > 0 && (
         <Box>
-          <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>台词列表 ({lines.length} 行)</Typography>
-          <Stack spacing={0.5}>
-            {lines.map(line => {
-              const role = roles.find(r => r.id === line.role_id);
-              return (
-                <Paper key={line.id} sx={{ p: 1.5, bgcolor: line.role_id ? '#f8fafc' : '#fffbeb', border: '1px solid #e2e8f0', borderRadius: 2 }}>
-                  <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
-                    <Chip label={role?.name || '旁白'} size="small" color={role ? 'primary' : 'default'} variant="outlined" />
-                    <Typography variant="caption" color="text.secondary">#{line.line_number}</Typography>
-                    {line.emotion_tag && <span className={'emotion-tag emotion-' + line.emotion_tag}>{line.emotion_tag}</span>}
-                  </Stack>
-                  <Typography variant="body2">{line.content}</Typography>
-                </Paper>
-              );
-            })}
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+            <Typography variant="h6" fontWeight={600}>台词列表 ({lines.length} 行)</Typography>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Checkbox size="small"
+                checked={filteredLines.length > 0 && selectedLines.size === filteredLines.length}
+                onChange={toggleSelectAll}
+              />
+              <Typography variant="caption" color="text.secondary">全选</Typography>
+              <Select size="small" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
+                sx={{ minWidth: 100 }}>
+                <MenuItem value="all">全部角色</MenuItem>
+                <MenuItem value="narration">旁白</MenuItem>
+                {roles.map(r => <MenuItem key={r.id} value={String(r.id)}>{r.name}</MenuItem>)}
+              </Select>
+            </Stack>
           </Stack>
+
+          <Stack spacing={0.5}>
+            {filteredLines.map(line => (
+              <LineRow
+                key={line.id}
+                line={line}
+                roles={roles}
+                selected={selectedLines.has(line.id)}
+                onToggleSelect={toggleSelectLine}
+                onUpdateLine={handleUpdateLine}
+                onCreateRole={() => setCreateRoleOpen(true)}
+                emotionOptions={emotionOptions}
+                complexEmotionOptions={complexEmotionOptions}
+              />
+            ))}
+          </Stack>
+
+          <BatchActionBar
+            selectedCount={selectedLines.size}
+            roles={roles}
+            emotionOptions={emotionOptions}
+            complexEmotionOptions={complexEmotionOptions}
+            onClearSelection={() => setSelectedLines(new Set())}
+            onBatchUpdate={handleBatchUpdate}
+            onQuickTransfer={handleQuickTransfer}
+          />
+
+          <CreateRoleDialog
+            open={createRoleOpen}
+            onClose={() => setCreateRoleOpen(false)}
+            onCreated={handleRoleCreated}
+            scriptId={Number(scriptId)}
+          />
         </Box>
       )}
 

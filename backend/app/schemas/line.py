@@ -38,3 +38,20 @@ class LineWithEmotion(LineResponse):
     """Schema for Line with emotion tag details."""
     emotion_tag: Optional[EmotionTagResponse] = None
     role_name: Optional[str] = None
+
+
+class LineUpdate(BaseModel):
+    """Schema for updating a single line."""
+    role_id: Optional[int] = None
+    emotion_tag: Optional[str] = None
+    complex_emotion: Optional[str] = None
+    emotion_intensity: Optional[float] = None
+
+
+class LineBatchUpdate(BaseModel):
+    """Schema for batch updating lines."""
+    mode: str = Field(..., description="Update mode: by_ids or by_role")
+    line_ids: Optional[List[int]] = None
+    script_id: Optional[int] = None
+    from_role_id: Optional[int] = None
+    updates: LineUpdate
