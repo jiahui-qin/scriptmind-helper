@@ -46,7 +46,11 @@ def _run_tts(script_id: int, role_voice_map: Dict[int, str], include_narration: 
         ]
         output_dir = os.path.join("data", "output")
         if not include_narration:
+            before = len(lines_dict)
             lines_dict = [l for l in lines_dict if l["role_id"] is not None]
+            logger.info(f"[tts:{script_id}] Filtered narration: {before} → {len(lines_dict)} lines")
+        else:
+            logger.info(f"[tts:{script_id}] Including narration ({len([l for l in lines_dict if l['role_id'] is None])} lines)")
 
         total = len(lines_dict)
         logger.info(f"[tts:{script_id}] Synthesizing {total} lines (gap={line_gap_ms}ms)")

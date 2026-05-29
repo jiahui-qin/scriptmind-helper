@@ -152,10 +152,13 @@ def synthesize_full_script(
         # so we only add gap between different-voice groups)
 
     # ── Splice all voice segments in order ────────────────────────
-    gap = AudioSegment.silent(duration=line_gap_ms)
     full = voice_segments[order[0]]
+    base_frame_rate = full.frame_rate
     for v in order[1:]:
-        full = full + gap + voice_segments[v]
+        if line_gap_ms > 0:
+            gap = AudioSegment.silent(duration=line_gap_ms, frame_rate=base_frame_rate)
+            full = full + gap
+        full = full + voice_segments[v]
 
     audio_path = os.path.join(output_dir, f"script_{script_id}_full.wav")
     srt_path = os.path.join(output_dir, f"script_{script_id}_full.srt")
