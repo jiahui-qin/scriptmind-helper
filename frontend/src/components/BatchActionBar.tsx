@@ -26,7 +26,7 @@ export default function BatchActionBar({
 
   const handleApply = () => {
     const updates: Record<string, any> = {};
-    if (batchRoleId) updates.role_id = batchRoleId === '__none__' ? null : Number(batchRoleId);
+    if (batchRoleId) updates.role_id = batchRoleId === '0' ? null : Number(batchRoleId);
     if (batchEmotion) updates.emotion_tag = batchEmotion;
     if (batchComplex) updates.complex_emotion = batchComplex;
     if (Object.keys(updates).length > 0) onBatchUpdate(updates);
@@ -42,21 +42,19 @@ export default function BatchActionBar({
           </Typography>
           <Select size="small" value={fromRole} displayEmpty sx={{ minWidth: 100 }}
             onChange={e => setFromRole(e.target.value)}>
-            <MenuItem value=""><em>来源角色</em></MenuItem>
-            <MenuItem value="__none__">旁白</MenuItem>
+            <MenuItem value=""><em>选择来源角色</em></MenuItem>
             {roles.map(r => <MenuItem key={r.id} value={String(r.id)}>{r.name}</MenuItem>)}
           </Select>
           <Typography variant="body2" color="text.secondary">→</Typography>
           <Select size="small" value={toRole} displayEmpty sx={{ minWidth: 100 }}
             onChange={e => setToRole(e.target.value)}>
-            <MenuItem value="" disabled><em>目标角色</em></MenuItem>
-            <MenuItem value="__none__">旁白</MenuItem>
+            <MenuItem value="" disabled><em>选择目标角色</em></MenuItem>
             {roles.map(r => <MenuItem key={r.id} value={String(r.id)}>{r.name}</MenuItem>)}
           </Select>
           <Button variant="contained" size="small" disabled={!fromRole || !toRole}
             onClick={() => {
-              const from = fromRole === '__none__' ? null : Number(fromRole);
-              const to = toRole === '__none__' ? null : Number(toRole);
+              const from = fromRole === '0' ? null : Number(fromRole);
+              const to = toRole === '0' ? null : Number(toRole);
               if (to !== undefined) onQuickTransfer(from, to);
             }}>
             执行转移
@@ -75,7 +73,6 @@ export default function BatchActionBar({
               <Select size="small" value={batchRoleId} displayEmpty sx={{ minWidth: 100 }}
                 onChange={e => setBatchRoleId(e.target.value)}>
                 <MenuItem value="">角色改为...</MenuItem>
-                <MenuItem value="__none__">旁白</MenuItem>
                 {roles.map(r => <MenuItem key={r.id} value={String(r.id)}>{r.name}</MenuItem>)}
               </Select>
               <StyleSelector label="基础情绪" value={batchEmotion} options={emotionOptions}

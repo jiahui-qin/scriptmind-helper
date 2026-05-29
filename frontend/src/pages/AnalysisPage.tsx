@@ -172,7 +172,7 @@ export default function AnalysisPage() {
   const filteredLines = roleFilter === 'all'
     ? lines
     : lines.filter(l =>
-        roleFilter === 'narration' ? l.role_id === null : l.role_id === Number(roleFilter)
+        roleFilter === '0' ? l.role_id === null : l.role_id === Number(roleFilter)
       );
 
   /** 全选 / 取消全选 */
@@ -296,7 +296,6 @@ export default function AnalysisPage() {
               <Select size="small" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
                 sx={{ minWidth: 100 }}>
                 <MenuItem value="all">全部角色</MenuItem>
-                <MenuItem value="narration">旁白</MenuItem>
                 {roles.map(r => <MenuItem key={r.id} value={String(r.id)}>{r.name}</MenuItem>)}
               </Select>
             </Stack>

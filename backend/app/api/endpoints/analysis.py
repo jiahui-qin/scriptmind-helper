@@ -154,6 +154,7 @@ async def get_analysis(script_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=f"Script {script_id} not found")
     roles = db.query(Role).filter(Role.script_id == script_id).all()
     lines = db.query(Line).filter(Line.script_id == script_id).order_by(Line.line_number).all()
+    has_narration = any(l.role_id is None for l in lines)
     return {
         "script_id": script_id,
         "is_analyzed": script.is_analyzed,
@@ -161,7 +162,14 @@ async def get_analysis(script_id: int, db: Session = Depends(get_db)):
         "progress": script.progress,
         "error_message": script.error_message,
         "roles": [
-            {
+            # 旁白作为系统角色始终排在最前（id=0 为虚拟ID，不与真实角色冲突）
+            *([{
+                "id": 0, "name": "旁白", "gender": "未知", "age": 0,
+                "voice_type": "冰糖", "personality": "叙述",
+                "tone_style": None, "voice_color": None, "persona_accent": None,
+                "dialect": None, "roleplay": None, "singing": None,
+            }] if has_narration else []),
+            *[{
                 "id": r.id, "name": r.name, "gender": r.gender,
                 "age": r.age, "voice_type": r.voice_type, "personality": r.personality,
                 "tone_style": r.tone_style,
@@ -170,8 +178,7 @@ async def get_analysis(script_id: int, db: Session = Depends(get_db)):
                 "dialect": r.dialect,
                 "roleplay": r.roleplay,
                 "singing": r.singing,
-            }
-            for r in roles
+            } for r in roles],
         ],
         "lines": [
             {

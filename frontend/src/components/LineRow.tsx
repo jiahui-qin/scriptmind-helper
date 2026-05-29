@@ -29,16 +29,14 @@ export default function LineRow({
       <Typography variant="caption" color="text.secondary" sx={{ minWidth: 24 }}>#{line.line_number}</Typography>
       <Select
         size="small"
-        value={line.role_id === null ? '__none__' : String(line.role_id)}
+        value={line.role_id === null ? '0' : String(line.role_id)}
         onChange={(e) => {
           const val = e.target.value;
           if (val === '__create__') { onCreateRole(); return; }
-          onUpdateLine(line.id, { role_id: val === '__none__' ? null : Number(val) });
+          onUpdateLine(line.id, { role_id: val === '0' ? null : Number(val) });
         }}
         sx={{ minWidth: 90 }}
       >
-        <MenuItem value="__none__">旁白</MenuItem>
-        <Divider />
         {roles.map(r => <MenuItem key={r.id} value={String(r.id)}>{r.name}</MenuItem>)}
         <Divider />
         <MenuItem value="__create__">
